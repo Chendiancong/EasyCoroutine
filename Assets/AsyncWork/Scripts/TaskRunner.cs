@@ -1,36 +1,31 @@
+using System;
+using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 
 namespace AsyncWork
 {
+
     public class TaskRunner : MonoBehaviour
     {
         // Start is called before the first frame update
         void Start()
         {
-            //RunTask().Wait();
+        }
+
+        public void Doit()
+        {
             RunTask();
         }
 
-        private async void RunTask()
+        public async void RunTask()
         {
-            await Task.Delay(1000);
-            LogThreadId("RunTask_1");
-            await Task.Delay(1000);
-            LogThreadId("RunTask_2");
-            LogThreadId($"{await RunTask2()}");
-        }
-
-        private async Task<string> RunTask2()
-        {
-            await Task.Delay(1000);
-            LogThreadId("RunTask2_1");
-            return "abc";
-        }
-
-        private void LogThreadId(string msg)
-        {
-            Debug.Log($"{msg}:{System.Threading.Thread.CurrentThread.ManagedThreadId}");
+            await new WaitForSeconds(1f);
+            Debug.Log("Heihei1");
+            await new WaitForSeconds(1f);
+            Debug.Log("Heihei2");
+            await new WaitForSeconds(1f);
+            Debug.Log("Heihei3");
         }
     }
 }

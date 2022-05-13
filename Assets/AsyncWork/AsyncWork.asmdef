@@ -1,7 +1,9 @@
 {
     "name": "AsyncWork",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:779171111c25e0e48bf7c4eefa21c59a"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
