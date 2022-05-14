@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace AsyncWork
@@ -34,9 +35,10 @@ namespace AsyncWork
             {
                 case AwaiterScheduleType.Normal:
                     {
-                        switch ((awaiter as IAwaiterScheduleable).ExecMode)
+                        switch (awaiter.ExecMode)
                         {
                             case AwaiterExecMode.ThreadPool:
+                                ThreadPool.QueueUserWorkItem(ThreadJob, awaiter);
                                 break;
                             case AwaiterExecMode.UnityFixedUpdate:
                                 mFixedUpdateAwaiters.Add(new ScheduleRecord() { awaiter = awaiter });
@@ -63,18 +65,29 @@ namespace AsyncWork
         COROUTINE_START:
             if (awaiter is IAwaiterYieldable)
             {
-                YieldInstruction instruction = (awaiter as IAwaiterYieldable).Instruction;
+                YieldInstruction instruction = awaiter.Instruction;
                 if (instruction != null)
                     yield return instruction;
             }
             else if (awaiter is IAwaiterCustomYieldable)
             {
-                CustomYieldInstruction instruction = (awaiter as IAwaiterCustomYieldable).CustomInstruction;
+                CustomYieldInstruction instruction = awaiter.CustomInstruction;
                 if (instruction != null)
                     yield return instruction;
             }
             if (!awaiter.IsDone())
                 goto COROUTINE_START;
+            awaiter.BeforeContinue();
+            if (!(awaiter is IAwaiterNoResult))
+                awaiter.SetupResult();
+            awaiter.Continue();
+        }
+
+        private void ThreadJob(object state)
+        {
+            IAwaiter awaiter = (IAwaiter)state;
+            awaiter.Start();
+            while (!awaiter.IsDone()) { }
             awaiter.BeforeContinue();
             if (!(awaiter is IAwaiterNoResult))
                 awaiter.SetupResult();
@@ -127,7 +140,6 @@ namespace AsyncWork
                         if (!(awaiter is IAwaiterNoResult))
                             awaiter.SetupResult();
                         awaiter.Continue();
-                        //awaiters[idx] = null;
                         awaiters[idx] = new ScheduleRecord();
                         ++doneNum;
                     }

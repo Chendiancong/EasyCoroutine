@@ -14,57 +14,53 @@ namespace AsyncWork
         private static AwaiterConstructInfo mYieldable =
             new AwaiterConstructInfo() { };
 
-        public static YieldAwaiter GetAwaiter(this WaitForSeconds waitForSeconds)
+        public static YieldAwaiterNoResult GetAwaiter(this WaitForSeconds waitForSeconds)
         {
             mYieldable.instruction = waitForSeconds;
-            return new YieldAwaiter(ref mYieldable);
+            return new YieldAwaiterNoResult(ref mYieldable);
         }
 
-        public static CustomYieldAwaiter GetAwaiter(this WaitForSecondsRealtime waitForSecondsRealtime)
+        public static CustomYieldAwaiterNoResult GetAwaiter(this WaitForSecondsRealtime waitForSecondsRealtime)
         {
             mYieldable.customInstruction = waitForSecondsRealtime;
-            return new CustomYieldAwaiter(ref mYieldable);
+            return new CustomYieldAwaiterNoResult(ref mYieldable);
         }
 
-        public static YieldAwaiter GetAwaiter(this WaitForEndOfFrame waitForEndOfFrame)
+        public static YieldAwaiterNoResult GetAwaiter(this WaitForEndOfFrame waitForEndOfFrame)
         {
             mYieldable.instruction = waitForEndOfFrame;
-            return new YieldAwaiter(ref mYieldable);
+            return new YieldAwaiterNoResult(ref mYieldable);
         }
 
-        public static YieldAwaiter GetAwaiter(this WaitForFixedUpdate waitForFixedUpdate)
+        public static YieldAwaiterNoResult GetAwaiter(this WaitForFixedUpdate waitForFixedUpdate)
         {
             mYieldable.instruction = waitForFixedUpdate;
-            return new YieldAwaiter(ref mYieldable);
+            return new YieldAwaiterNoResult(ref mYieldable);
         }
 
-        public static CustomYieldAwaiter GetAwaiter(this WaitUntil waitUntil)
+        public static CustomYieldAwaiterNoResult GetAwaiter(this WaitUntil waitUntil)
         {
             mYieldable.customInstruction = waitUntil;
-            return new CustomYieldAwaiter(ref mYieldable);
+            return new CustomYieldAwaiterNoResult(ref mYieldable);
         }
 
-        public static CustomYieldAwaiter GetAwaiter(this WaitWhile waitWhile)
+        public static CustomYieldAwaiterNoResult GetAwaiter(this WaitWhile waitWhile)
         {
             mYieldable.customInstruction = waitWhile;
-            return new CustomYieldAwaiter(ref mYieldable);
+            return new CustomYieldAwaiterNoResult(ref mYieldable);
         }
 
-        public class YieldAwaiter : CustomAwaiterNoResult, IAwaiterYieldable
+        public class YieldAwaiterNoResult : CustomAwaiterNoResult, IAwaiterYieldable
         {
-            public YieldInstruction Instruction { get; set; }
-
-            public YieldAwaiter(ref AwaiterConstructInfo info) : base(ref info)
+            public YieldAwaiterNoResult(ref AwaiterConstructInfo info) : base(ref info)
             { }
 
             public override void Start() { }
         }
 
-        public class CustomYieldAwaiter : CustomAwaiterNoResult, IAwaiterCustomYieldable
+        public class CustomYieldAwaiterNoResult : CustomAwaiterNoResult, IAwaiterCustomYieldable
         {
-            public CustomYieldInstruction CustomInstruction { get; set; }
-
-            public CustomYieldAwaiter(ref AwaiterConstructInfo info) : base(ref info)
+            public CustomYieldAwaiterNoResult(ref AwaiterConstructInfo info) : base(ref info)
             { }
 
             public override void Start() { }

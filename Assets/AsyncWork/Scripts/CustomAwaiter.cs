@@ -18,6 +18,18 @@ namespace AsyncWork
         /// </summary>
         bool IsCompleted { get; }
         /// <summary>
+        /// 执行模式
+        /// </summary>
+        AwaiterExecMode ExecMode { get; }
+        /// <summary>
+        /// 协程yield对象
+        /// </summary>
+        YieldInstruction Instruction { get; }
+        /// <summary>
+        /// 自定义yield对象
+        /// </summary>
+        CustomYieldInstruction CustomInstruction { get; }
+        /// <summary>
         /// 开始调度
         /// </summary>
         void Start();
@@ -39,29 +51,11 @@ namespace AsyncWork
         void SetupResult();
     }
 
-    public interface IAwaiterScheduleable
-    {
-        /// <summary>
-        /// 执行模式
-        /// </summary>
-        AwaiterExecMode ExecMode { get; set; }
-    }
+    public interface IAwaiterScheduleable { }
 
-    public interface IAwaiterYieldable
-    {
-        /// <summary>
-        /// 协程yield对象
-        /// </summary>
-        YieldInstruction Instruction { get; set; }
-    }
+    public interface IAwaiterYieldable { }
 
-    public interface IAwaiterCustomYieldable
-    {
-        /// <summary>
-        /// 自定义yield对象
-        /// </summary>
-        CustomYieldInstruction CustomInstruction { get; set; }
-    }
+    public interface IAwaiterCustomYieldable { }
 
     public interface IAwaiterResult<T>
     {
@@ -80,6 +74,9 @@ namespace AsyncWork
 
         public AwaiterScheduleType ScheduleType { get; protected set; }
         public bool IsCompleted { get; protected set; }
+        public AwaiterExecMode ExecMode { get; }
+        public YieldInstruction Instruction { get; }
+        public CustomYieldInstruction CustomInstruction { get; }
 
         public abstract void Start();
 
@@ -105,19 +102,17 @@ namespace AsyncWork
             IsCompleted = info.isSync;
             if (this is IAwaiterScheduleable)
             {
-                var target = this as IAwaiterScheduleable;
-                if (target.ExecMode != AwaiterExecMode.Default)
-                    target.ExecMode = info.execMode;
+                ExecMode = info.execMode;
                 ScheduleType = AwaiterScheduleType.Normal;
             }
             else if (this is IAwaiterYieldable)
             {
-                (this as IAwaiterYieldable).Instruction = info.instruction;
+                Instruction = info.instruction;
                 ScheduleType = AwaiterScheduleType.Coroutine;
             }
             else if (this is IAwaiterCustomYieldable)
             {
-                (this as IAwaiterCustomYieldable).CustomInstruction = info.customInstruction;
+                CustomInstruction = info.customInstruction;
                 ScheduleType = AwaiterScheduleType.Coroutine;
             }
         }
@@ -203,5 +198,11 @@ namespace AsyncWork
         /// 自定义协程yield对象
         /// </summary>
         public CustomYieldInstruction customInstruction;
+
+        public AsyncOperation Operation
+        {
+            get => (AsyncOperation)instruction;
+            set => instruction = value;
+        }
     }
 }
