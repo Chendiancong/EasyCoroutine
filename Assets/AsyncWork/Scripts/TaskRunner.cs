@@ -21,11 +21,11 @@ namespace AsyncWork
         public async void RunTask()
         {
             await new WaitForSeconds(1f);
-            Debug.Log("Heihei1");
+            Debug.Log("Hello1");
             await new WaitForSeconds(1f);
-            Debug.Log("Heihei2");
+            Debug.Log("Hello2");
             await new WaitForSeconds(1f);
-            Debug.Log("Heihei3");
+            Debug.Log("Hello3");
         }
     }
 }

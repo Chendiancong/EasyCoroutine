@@ -10,7 +10,7 @@ namespace AsyncWork
         /// <summary>
         /// 异步对象的调度类型
         /// </summary>
-        kAwaiterScheduleType ScheduleType { get; }
+        AwaiterScheduleType ScheduleType { get; }
         /// <summary>
         /// 是否为同步执行，这是await语句会动态调用的属性
         /// 如果为true，则为直接执行
@@ -18,9 +18,13 @@ namespace AsyncWork
         /// </summary>
         bool IsCompleted { get; }
         /// <summary>
+        /// 开始调度
+        /// </summary>
+        void Start();
+        /// <summary>
         /// 异步任务是否已完成
         /// </summary>
-        bool IsDone { get; }
+        bool IsDone();
         /// <summary>
         /// 当异步任务完成的时候
         /// </summary>
@@ -38,11 +42,9 @@ namespace AsyncWork
     public interface IAwaiterScheduleable
     {
         /// <summary>
-        /// 执行模式，如果该属性默认值不为Default
-        /// 就采用默认值作为最终的模式
-        /// 否则就根据构造函数传入参数来决定
+        /// 执行模式
         /// </summary>
-        kAwaiterExecMode ExecMode { get; set; }
+        AwaiterExecMode ExecMode { get; set; }
     }
 
     public interface IAwaiterYieldable
@@ -58,7 +60,7 @@ namespace AsyncWork
         /// <summary>
         /// 自定义yield对象
         /// </summary>
-        CustomYieldInstruction Instruction { get; set; }
+        CustomYieldInstruction CustomInstruction { get; set; }
     }
 
     public interface IAwaiterResult<T>
@@ -76,9 +78,12 @@ namespace AsyncWork
     {
         private Action mContinuation;
 
-        public kAwaiterScheduleType ScheduleType { get; protected set; }
+        public AwaiterScheduleType ScheduleType { get; protected set; }
         public bool IsCompleted { get; protected set; }
-        public virtual bool IsDone { get; set; }
+
+        public abstract void Start();
+
+        public virtual bool IsDone() => true;
 
         public void OnCompleted(Action continuation)
         {
@@ -86,7 +91,7 @@ namespace AsyncWork
             Schedule();
         }
 
-        public abstract void BeforeContinue();
+        public virtual void BeforeContinue() { }
 
         public void Continue()
         {
@@ -101,19 +106,19 @@ namespace AsyncWork
             if (this is IAwaiterScheduleable)
             {
                 var target = this as IAwaiterScheduleable;
-                if (target.ExecMode != kAwaiterExecMode.Default)
+                if (target.ExecMode != AwaiterExecMode.Default)
                     target.ExecMode = info.execMode;
-                ScheduleType = kAwaiterScheduleType.Normal;
+                ScheduleType = AwaiterScheduleType.Normal;
             }
             else if (this is IAwaiterYieldable)
             {
                 (this as IAwaiterYieldable).Instruction = info.instruction;
-                ScheduleType = kAwaiterScheduleType.Coroutine;
+                ScheduleType = AwaiterScheduleType.Coroutine;
             }
             else if (this is IAwaiterCustomYieldable)
             {
-                (this as IAwaiterCustomYieldable).Instruction = info.customInstruction;
-                ScheduleType = kAwaiterScheduleType.Coroutine;
+                (this as IAwaiterCustomYieldable).CustomInstruction = info.customInstruction;
+                ScheduleType = AwaiterScheduleType.Coroutine;
             }
         }
 
@@ -138,7 +143,7 @@ namespace AsyncWork
     /// <summary>
     /// 异步对象的调度类型
     /// </summary>
-    public enum kAwaiterScheduleType
+    public enum AwaiterScheduleType
     {
         None,
         /// <summary>
@@ -155,7 +160,7 @@ namespace AsyncWork
     /// <summary>
     /// 异步任务的运行模式
     /// </summary>
-    public enum kAwaiterExecMode
+    public enum AwaiterExecMode
     {
         Default,
         /// <summary>
@@ -189,7 +194,7 @@ namespace AsyncWork
         /// 就采用默认值作为最终的模式
         /// 否则就根据构造函数传入参数来决定
         /// </summary>
-        public kAwaiterExecMode execMode;
+        public AwaiterExecMode execMode;
         /// <summary>
         /// 协程的yield对象
         /// </summary>

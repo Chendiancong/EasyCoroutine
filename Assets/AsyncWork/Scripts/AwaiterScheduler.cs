@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,9 +7,11 @@ namespace AsyncWork
 {
     public class AwaiterScheduler : MonoBehaviour
     {
-        private List<IAwaiter> mFixedUpdateAwaiters;
-        private List<IAwaiter> mUpdateAwaiters;
-        private List<IAwaiter> mLateUpdateAwaiters;
+        private List<ScheduleRecord> mFixedUpdateAwaiters;
+        private List<ScheduleRecord> mUpdateAwaiters;
+        private List<ScheduleRecord> mLateUpdateAwaiters;
+
+        private const int kStartState = 1;
 
         private static AwaiterScheduler mInstance;
         public static AwaiterScheduler Instance
@@ -29,35 +32,60 @@ namespace AsyncWork
         {
             switch (awaiter.ScheduleType)
             {
-                case kAwaiterScheduleType.Normal:
+                case AwaiterScheduleType.Normal:
                     {
                         switch ((awaiter as IAwaiterScheduleable).ExecMode)
                         {
-                            case kAwaiterExecMode.ThreadPool:
+                            case AwaiterExecMode.ThreadPool:
                                 break;
-                            case kAwaiterExecMode.UnityFixedUpdate:
-                                mFixedUpdateAwaiters.Add(awaiter);
+                            case AwaiterExecMode.UnityFixedUpdate:
+                                mFixedUpdateAwaiters.Add(new ScheduleRecord() { awaiter = awaiter });
                                 break;
-                            case kAwaiterExecMode.Default:
-                            case kAwaiterExecMode.UnityUpdate:
-                                mUpdateAwaiters.Add(awaiter);
+                            case AwaiterExecMode.Default:
+                            case AwaiterExecMode.UnityUpdate:
+                                mUpdateAwaiters.Add(new ScheduleRecord() { awaiter = awaiter });
                                 break;
-                            case kAwaiterExecMode.UnityLateUpdate:
-                                mLateUpdateAwaiters.Add(awaiter);
+                            case AwaiterExecMode.UnityLateUpdate:
+                                mLateUpdateAwaiters.Add(new ScheduleRecord() { awaiter = awaiter });
                                 break;
                         }
                     }
                     break;
-                case kAwaiterScheduleType.Coroutine:
+                case AwaiterScheduleType.Coroutine:
+                    StartCoroutine(WaitForInstruction(awaiter));
                     break;
             }
         }
 
+        private IEnumerator WaitForInstruction(IAwaiter awaiter)
+        {
+            awaiter.Start();
+        COROUTINE_START:
+            if (awaiter is IAwaiterYieldable)
+            {
+                YieldInstruction instruction = (awaiter as IAwaiterYieldable).Instruction;
+                if (instruction != null)
+                    yield return instruction;
+            }
+            else if (awaiter is IAwaiterCustomYieldable)
+            {
+                CustomYieldInstruction instruction = (awaiter as IAwaiterCustomYieldable).CustomInstruction;
+                if (instruction != null)
+                    yield return instruction;
+            }
+            if (!awaiter.IsDone())
+                goto COROUTINE_START;
+            awaiter.BeforeContinue();
+            if (!(awaiter is IAwaiterNoResult))
+                awaiter.SetupResult();
+            awaiter.Continue();
+        }
+
         private void Awake()
         {
-            mFixedUpdateAwaiters = new List<IAwaiter>();
-            mUpdateAwaiters = new List<IAwaiter>();
-            mLateUpdateAwaiters = new List<IAwaiter>();
+            mFixedUpdateAwaiters = new List<ScheduleRecord>();
+            mUpdateAwaiters = new List<ScheduleRecord>();
+            mLateUpdateAwaiters = new List<ScheduleRecord>();
         }
 
         private void OnDestroy()
@@ -75,7 +103,7 @@ namespace AsyncWork
         private void LateUpdate() =>
             CheckAwaiters(mLateUpdateAwaiters);
 
-        private void CheckAwaiters(List<IAwaiter> awaiters)
+        private void CheckAwaiters(List<ScheduleRecord> awaiters)
         {
             int doneNum = 0;
             int idx = 0;
@@ -86,14 +114,21 @@ namespace AsyncWork
             {
                 for (; idx < len; ++idx)
                 {
-                    IAwaiter awaiter = awaiters[idx];
-                    if (awaiter.IsDone)
+                    var record = awaiters[idx];
+                    if ((record.state & kStartState) == 0)
+                    {
+                        record.awaiter.Start();
+                        record.state |= kStartState;
+                    }
+                    IAwaiter awaiter = record.awaiter;
+                    if (awaiter.IsDone())
                     {
                         awaiter.BeforeContinue();
                         if (!(awaiter is IAwaiterNoResult))
                             awaiter.SetupResult();
                         awaiter.Continue();
-                        awaiters[idx] = null;
+                        //awaiters[idx] = null;
+                        awaiters[idx] = new ScheduleRecord();
                         ++doneNum;
                     }
                 }
@@ -102,13 +137,19 @@ namespace AsyncWork
                 Debug.LogError($"Awaiter Error {e.Message}");
                 Debug.LogError(e.StackTrace);
                 // 出现异常后直接清除这个awaiter
-                awaiters[idx] = null;
+                awaiters[idx] = new ScheduleRecord();
                 ++doneNum;
             }
             if (doneNum > 0)
                 awaiters.RemoveAll(CheckIsNull);
         }
 
-        private bool CheckIsNull(IAwaiter awaiter) => awaiter == null;
+        private bool CheckIsNull(ScheduleRecord record) => record.awaiter == null;
+
+        private struct ScheduleRecord
+        {
+            public IAwaiter awaiter;
+            public int state;
+        }
     }
 }

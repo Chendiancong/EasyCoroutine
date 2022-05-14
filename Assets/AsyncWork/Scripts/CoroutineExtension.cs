@@ -6,46 +6,68 @@ namespace AsyncWork
     public static class CoroutineExtension
     {
         private static AwaiterConstructInfo mRunInFixedUpdate =
-            new AwaiterConstructInfo() { execMode = kAwaiterExecMode.UnityFixedUpdate };
+            new AwaiterConstructInfo() { execMode = AwaiterExecMode.UnityFixedUpdate };
         private static AwaiterConstructInfo mRunInUpdate =
-            new AwaiterConstructInfo() { execMode = kAwaiterExecMode.UnityUpdate };
+            new AwaiterConstructInfo() { execMode = AwaiterExecMode.UnityUpdate };
         private static AwaiterConstructInfo mRunInLateUpdate =
-            new AwaiterConstructInfo() { execMode = kAwaiterExecMode.UnityLateUpdate };
+            new AwaiterConstructInfo() { execMode = AwaiterExecMode.UnityLateUpdate };
+        private static AwaiterConstructInfo mYieldable =
+            new AwaiterConstructInfo() { };
 
-        public static DelayAwaiter GetAwaiter(this WaitForSeconds _)
+        public static YieldAwaiter GetAwaiter(this WaitForSeconds waitForSeconds)
         {
-            return new DelayAwaiter(ref mRunInFixedUpdate, TimeSpan.FromSeconds(1));
+            mYieldable.instruction = waitForSeconds;
+            return new YieldAwaiter(ref mYieldable);
         }
 
-        public class DelayAwaiter : CustomAwaiterNoResult, IAwaiterScheduleable
+        public static CustomYieldAwaiter GetAwaiter(this WaitForSecondsRealtime waitForSecondsRealtime)
         {
-            public float mTargetTime;
-
-            public kAwaiterExecMode ExecMode { get; set; }
-
-            public DelayAwaiter(ref AwaiterConstructInfo info, TimeSpan time) : base(ref info)
-            {
-                mTargetTime = Time.time + (float)time.TotalSeconds;
-            }
-
-            public override bool IsDone
-            {
-                get => Time.time >= mTargetTime;
-            }
-
-            public override void BeforeContinue() { }
+            mYieldable.customInstruction = waitForSecondsRealtime;
+            return new CustomYieldAwaiter(ref mYieldable);
         }
 
-        public class YieldAwaiter : CustomAwaiterNoResult
+        public static YieldAwaiter GetAwaiter(this WaitForEndOfFrame waitForEndOfFrame)
         {
-            public YieldAwaiter(ref AwaiterConstructInfo info, YieldInstruction yieldInstruction) : base(ref info)
-            {
-            }
+            mYieldable.instruction = waitForEndOfFrame;
+            return new YieldAwaiter(ref mYieldable);
+        }
 
-            public override void BeforeContinue()
-            {
-                throw new NotImplementedException();
-            }
+        public static YieldAwaiter GetAwaiter(this WaitForFixedUpdate waitForFixedUpdate)
+        {
+            mYieldable.instruction = waitForFixedUpdate;
+            return new YieldAwaiter(ref mYieldable);
+        }
+
+        public static CustomYieldAwaiter GetAwaiter(this WaitUntil waitUntil)
+        {
+            mYieldable.customInstruction = waitUntil;
+            return new CustomYieldAwaiter(ref mYieldable);
+        }
+
+        public static CustomYieldAwaiter GetAwaiter(this WaitWhile waitWhile)
+        {
+            mYieldable.customInstruction = waitWhile;
+            return new CustomYieldAwaiter(ref mYieldable);
+        }
+
+        public class YieldAwaiter : CustomAwaiterNoResult, IAwaiterYieldable
+        {
+            public YieldInstruction Instruction { get; set; }
+
+            public YieldAwaiter(ref AwaiterConstructInfo info) : base(ref info)
+            { }
+
+            public override void Start() { }
+        }
+
+        public class CustomYieldAwaiter : CustomAwaiterNoResult, IAwaiterCustomYieldable
+        {
+            public CustomYieldInstruction CustomInstruction { get; set; }
+
+            public CustomYieldAwaiter(ref AwaiterConstructInfo info) : base(ref info)
+            { }
+
+            public override void Start() { }
         }
     }
 }
