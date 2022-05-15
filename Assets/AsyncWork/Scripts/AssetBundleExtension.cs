@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace AsyncWork
@@ -45,6 +46,26 @@ namespace AsyncWork
             return new AssetBundleRequestAwaiter<T>(ref info);
         }
 
+        public static AssetBundleRequestMultipleWrapper<T> WrapMultiple<T>(this AssetBundleRequest request)
+            where T : UnityEngine.Object
+        {
+            return new AssetBundleRequestMultipleWrapper<T>()
+            {
+                request = request,
+            };
+        }
+
+        public static AssetBundleRequestMultipleAwaiter<T> GetAwaiter<T>(this AssetBundleRequestMultipleWrapper<T> wrapper)
+            where T : UnityEngine.Object
+        {
+            AwaiterConstructInfo info = new AwaiterConstructInfo()
+            {
+                execMode = AwaiterExecMode.Coroutine,
+                instruction = wrapper.request
+            };
+            return new AssetBundleRequestMultipleAwaiter<T>(ref info);
+        }
+
         public class AssetBundleCreateRequestAwaiter : CustomAwaiter<AssetBundle>
         {
             private AssetBundleCreateRequest mRequest;
@@ -78,21 +99,19 @@ namespace AsyncWork
             public override AssetBundle GetResult() => mResult;
         }
 
-        public class AssetBundleRequestAwaiter<T> : CustomAwaiter<T>
-            where T : UnityEngine.Object
+        public abstract class AssetBundleRequestBaseAwaiter<T> : CustomAwaiter<T>
         {
-            private AssetBundleRequest mRequest;
-            private T mResult;
+            protected AssetBundleRequest request;
 
-            public AssetBundleRequestAwaiter(ref AwaiterConstructInfo info): base(ref info)
+            public AssetBundleRequestBaseAwaiter(ref AwaiterConstructInfo info): base(ref info)
             {
                 try
                 {
-                    mRequest = info.instruction as AssetBundleRequest;
+                    request = info.instruction as AssetBundleRequest;
                 }
                 catch (Exception e)
                 {
-                    mRequest = null;
+                    request = null;
                     Debug.LogError($"{e.Message}");
                     Debug.LogError(e.StackTrace);
                 }
@@ -100,20 +119,54 @@ namespace AsyncWork
 
             public override bool IsDone()
             {
-                return mRequest != null ?
-                    mRequest.isDone :
+                return request != null ?
+                    request.isDone :
                     true;
             }
 
             public override void Start() { }
+        }
+
+        public class AssetBundleRequestAwaiter<T> : AssetBundleRequestBaseAwaiter<T>
+            where T : UnityEngine.Object
+        {
+            private T mResult;
+            public AssetBundleRequestAwaiter(ref AwaiterConstructInfo info): base(ref info)
+            { }
 
             public override void SetupResult() =>
-                mResult = mRequest != null ? (T)mRequest.asset : default(T);
+                mResult = request != null ? (T)request.asset : default(T);
 
             public override T GetResult() => mResult;
         }
 
+        public class AssetBundleRequestMultipleAwaiter<T> : AssetBundleRequestBaseAwaiter<T[]>
+            where T : UnityEngine.Object
+        {
+            private T[] mResult;
+
+            public AssetBundleRequestMultipleAwaiter(ref AwaiterConstructInfo info): base(ref info)
+            { }
+
+            public override void SetupResult()
+            {
+                if (request != null && request.allAssets.Length > 0)
+                {
+                    mResult = new T[request.allAssets.Length];
+                    Array.Copy(request.allAssets, mResult, request.allAssets.Length);
+                }
+            }
+
+            public override T[] GetResult() => mResult;
+        }
+
         public struct AssetBundleRequestWrapper<T>
+            where T : UnityEngine.Object
+        {
+            public AssetBundleRequest request;
+        }
+
+        public struct AssetBundleRequestMultipleWrapper<T>
             where T : UnityEngine.Object
         {
             public AssetBundleRequest request;

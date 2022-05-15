@@ -26,9 +26,9 @@ namespace AsyncWork
             await new WaitForEndOfFrame();
             var ab = await AssetBundle.LoadFromFileAsync(Application.streamingAssetsPath + Path.DirectorySeparatorChar + "sphere.prefab.asset");
             Debug.Log(ab);
-            var obj = await ab.LoadAssetAsync("Sphere").Wrap<GameObject>();
-            GameObject ins = Instantiate(obj);
-            ins.transform.position = Vector3.zero;
+            var objs = await ab.LoadAssetAsync("Sphere").WrapMultiple<GameObject>();
+            foreach (var obj in objs)
+                Instantiate(obj);
         }
 
     }
