@@ -31,29 +31,23 @@ namespace AsyncWork
 
         public void ScheduleAwaiter(IAwaiter awaiter)
         {
-            switch (awaiter.ScheduleType)
+            switch (awaiter.ExecMode)
             {
-                case AwaiterScheduleType.Normal:
-                    {
-                        switch (awaiter.ExecMode)
-                        {
-                            case AwaiterExecMode.ThreadPool:
-                                ThreadPool.QueueUserWorkItem(ThreadJob, awaiter);
-                                break;
-                            case AwaiterExecMode.UnityFixedUpdate:
-                                mFixedUpdateAwaiters.Add(new ScheduleRecord() { awaiter = awaiter });
-                                break;
-                            case AwaiterExecMode.Default:
-                            case AwaiterExecMode.UnityUpdate:
-                                mUpdateAwaiters.Add(new ScheduleRecord() { awaiter = awaiter });
-                                break;
-                            case AwaiterExecMode.UnityLateUpdate:
-                                mLateUpdateAwaiters.Add(new ScheduleRecord() { awaiter = awaiter });
-                                break;
-                        }
-                    }
+                case AwaiterExecMode.Default:
                     break;
-                case AwaiterScheduleType.Coroutine:
+                case AwaiterExecMode.ThreadPool:
+                    ThreadPool.QueueUserWorkItem(ThreadJob, awaiter);
+                    break;
+                case AwaiterExecMode.UnityFixedUpdate:
+                    mFixedUpdateAwaiters.Add(new ScheduleRecord() { awaiter = awaiter });
+                    break;
+                case AwaiterExecMode.UnityUpdate:
+                    mUpdateAwaiters.Add(new ScheduleRecord() { awaiter = awaiter });
+                    break;
+                case AwaiterExecMode.UnityLateUpdate:
+                    mLateUpdateAwaiters.Add(new ScheduleRecord() { awaiter = awaiter });
+                    break;
+                case AwaiterExecMode.Coroutine:
                     StartCoroutine(WaitForInstruction(awaiter));
                     break;
             }
@@ -63,18 +57,10 @@ namespace AsyncWork
         {
             awaiter.Start();
         COROUTINE_START:
-            if (awaiter is IAwaiterYieldable)
-            {
-                YieldInstruction instruction = awaiter.Instruction;
-                if (instruction != null)
-                    yield return instruction;
-            }
-            else if (awaiter is IAwaiterCustomYieldable)
-            {
-                CustomYieldInstruction instruction = awaiter.CustomInstruction;
-                if (instruction != null)
-                    yield return instruction;
-            }
+            if (awaiter.Instruction != null)
+                yield return awaiter.Instruction;
+            else if (awaiter.CustomInstruction != null)
+                yield return awaiter.CustomInstruction;
             if (!awaiter.IsDone())
                 goto COROUTINE_START;
             awaiter.BeforeContinue();

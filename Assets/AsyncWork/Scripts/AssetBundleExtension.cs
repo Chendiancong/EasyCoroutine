@@ -5,7 +5,7 @@ namespace AsyncWork
 {
     public static class AssetBundleExtension
     {
-        public class AssetBundleCreateRequestAwaiter : CustomAwaiter<AssetBundle>, IAwaiterScheduleable
+        public class AssetBundleCreateRequestAwaiter : CustomAwaiter<AssetBundle>
         {
             private AssetBundleCreateRequest mRequest;
             public AssetBundleCreateRequestAwaiter(ref AwaiterConstructInfo info): base(ref info)
@@ -44,7 +44,7 @@ namespace AsyncWork
             }
         }
 
-        public class AssetBundleRequestAwaiter<T> : CustomAwaiter<T>, IAwaiterScheduleable
+        public class AssetBundleRequestAwaiter<T> : CustomAwaiter<T>
             where T : UnityEngine.Object
         {
             private AssetBundleRequest mRequest;
