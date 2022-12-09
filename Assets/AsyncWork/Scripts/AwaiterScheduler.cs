@@ -118,6 +118,7 @@ namespace AsyncWork
                     {
                         record.awaiter.Start();
                         record.state |= kStartState;
+                        awaiters[idx] = record;
                     }
                     IAwaiter awaiter = record.awaiter;
                     if (awaiter.IsDone())

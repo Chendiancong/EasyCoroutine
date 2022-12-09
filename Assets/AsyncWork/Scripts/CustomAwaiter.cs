@@ -7,11 +7,6 @@ namespace AsyncWork
     #region Interface
     public interface IAwaiter : INotifyCompletion
     {
-        /// <summary>
-        /// 是否为同步执行，这是await语句会动态调用的属性
-        /// 如果为true，则为直接执行
-        /// 如果为false，则调用OnCompleted，并通过它的参数，亦即一个委托继续执行异步函数
-        /// </summary>
         bool IsCompleted { get; }
         /// <summary>
         /// 执行模式
