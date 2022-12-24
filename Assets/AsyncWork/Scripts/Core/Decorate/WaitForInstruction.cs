@@ -1,9 +1,8 @@
-using System.Collections;
 using UnityEngine;
 
 namespace AsyncWork.Core
 {
-    public class WaitForInstruction: IAwaitable
+    public class WaitForInstruction: IAwaitable, IInstructionCompletable, ICustomInstructionCompletable
     {
         private Worker mWorker;
 
@@ -16,28 +15,26 @@ namespace AsyncWork.Core
 
         ICustomAwaiter IAwaitable.GetAwaiter() => GetAwaiter();
 
-        public WaitForInstruction(YieldInstruction instruction, MonoBehaviour runner)
+        public void OnComplete(YieldInstruction instruction)
         {
-            mWorker = new Worker();
-            runner.StartCoroutine(CoForYieldInstruction(instruction));
-        }
-
-        public WaitForInstruction(CustomYieldInstruction instruction, MonoBehaviour runner)
-        {
-            mWorker = new Worker();
-            runner.StartCoroutine(CoForCustomYieldInstruction(instruction));
-        }
-
-        private IEnumerator CoForYieldInstruction(YieldInstruction instruction)
-        {
-            yield return instruction;
             mWorker.Resolve();
         }
 
-        private IEnumerator CoForCustomYieldInstruction(CustomYieldInstruction instruction)
+        public void OnComplete(CustomYieldInstruction instruction)
         {
-            yield return instruction;
             mWorker.Resolve();
+        }
+
+        public WaitForInstruction(YieldInstruction instruction, IInstructionWaitable runner)
+        {
+            mWorker = new Worker();
+            runner.WaitFor(instruction, this);
+        }
+
+        public WaitForInstruction(CustomYieldInstruction instruction, IInstructionWaitable runner)
+        {
+            mWorker = new Worker();
+            runner.WaitFor(instruction, this);
         }
     }
 }

@@ -20,6 +20,8 @@ namespace AsyncWork.Core
         T GetResult();
     }
 
+    public interface IWorkerCallback { }
+
     public interface IAwaitable
     {
         ICustomAwaiter GetAwaiter();
@@ -30,24 +32,20 @@ namespace AsyncWork.Core
         ICustomAwaiter<TResult> GetAwaiter();
     }
 
-    public interface IScheduleable
+
+    public interface IInstructionCompletable
     {
-        void Update();
+        void OnComplete(YieldInstruction instruction);
     }
 
-    public interface IWorkerCallback { }
+    public interface ICustomInstructionCompletable
+    {
+        void OnComplete(CustomYieldInstruction instruction);
+    }
 
     public interface IInstructionWaitable
     {
-        void WaitFor(YieldInstruction instruction);
-        void WaitFor(CustomYieldInstruction instruction);
-    }
-
-    public enum WorkerStatus
-    {
-        Waiting,
-        Running,
-        Succeed,
-        Failed,
+        void WaitFor<T>(T instruction, IInstructionCompletable completable) where T : YieldInstruction;
+        void WaitFor<T>(T instruction, ICustomInstructionCompletable completable) where T : CustomYieldInstruction;
     }
 }

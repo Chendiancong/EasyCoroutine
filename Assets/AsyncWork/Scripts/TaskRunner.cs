@@ -29,10 +29,12 @@ namespace AsyncWork
             //var objs = await ab.LoadAssetAsync("Sphere").WrapMultiple<GameObject>();
             //foreach (var obj in objs)
             //    Instantiate(obj);
-            Debug.Log("wait 1s...");
-            await Core.Awaiter.Wait(new WaitForSeconds(1f), this);
+            Debug.Log("wait 1s");
+            var runner = new Core.WorkerRunner(this);
+            await Core.Awaiter.Wait(new WaitForSeconds(1f), runner);
+            Debug.Log("wait 1s");
+            await Core.Awaiter.Wait(new WaitForSeconds(2f), runner);
             Debug.Log("ok");
-            AssetBundleCreateRequest _ = null;
         }
 
     }
