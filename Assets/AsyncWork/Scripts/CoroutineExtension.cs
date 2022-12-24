@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace AsyncWork
 {
-    public static class CoroutineExtension
+    public static partial class CoroutineExtension
     {
         private static AwaiterConstructInfo mRunInFixedUpdate =
             new AwaiterConstructInfo() { execMode = AwaiterExecMode.UnityFixedUpdate };
@@ -71,5 +71,10 @@ namespace AsyncWork
 
             public override void Start() { }
         }
+    }
+
+    public static partial class CoroutineExtension
+    {
+
     }
 }
