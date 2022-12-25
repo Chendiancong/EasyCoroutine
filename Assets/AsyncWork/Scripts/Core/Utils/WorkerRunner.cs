@@ -64,22 +64,23 @@ namespace AsyncWork.Core
 
         private IEnumerator CoroutineWaitInstruction(int id)
         {
-            WorkerRunnerItem item = mItems[id];
-            switch (item.type)
+            while (true)
             {
-                case 1:
-                    yield return item.instruction;
-                    break;
-                case 2:
-                    yield return item.customInstruction;
-                    break;
-            }
+                WorkerRunnerItem item = mItems[id];
+                switch (item.type)
+                {
+                    case 1:
+                        yield return item.instruction;
+                        break;
+                    case 2:
+                        yield return item.customInstruction;
+                        break;
+                    default:
+                        break;
+                }
 
-            mItems[id].Clear();
-            mFreeIds.Push(id);
+                mItems[id].Clear();
 
-            try
-            {
                 switch (item.type)
                 {
                     case 1:
@@ -88,10 +89,14 @@ namespace AsyncWork.Core
                     case 2:
                         item.customCompletable.OnComplete(item.customInstruction);
                         break;
+                    default:
+                        mHost.StopCoroutine(item.target);
+                        mFreeIds.Push(id);
+                        break;
                 }
-            } catch
-            {
-                throw;
+
+
+                yield return 0;
             }
         }
 
@@ -142,6 +147,7 @@ namespace AsyncWork.Core
 
             public void Clear()
             {
+                type = 0;
                 instruction = null;
                 customInstruction = null;
                 completable = null;

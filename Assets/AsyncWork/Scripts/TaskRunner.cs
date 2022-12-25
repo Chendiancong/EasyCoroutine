@@ -1,18 +1,35 @@
-using System.IO;
+using System.Collections;
 using UnityEngine;
+using System.Threading.Tasks;
 
 namespace AsyncWork
 {
 
     public class TaskRunner : MonoBehaviour
     {
+        private YieldInstruction mInstruction;
+        private IEnumerator mCoroutine;
         // Start is called before the first frame update
         void Start()
         {
+            mCoroutine = RunTask2();
         }
 
+        private int mTimes = 0;
         public void Doit()
         {
+            //if (mTimes == 0)
+            //{
+            //    mInstruction = new WaitForSeconds(1f);
+            //    ++mTimes;
+            //    StartCoroutine(mCoroutine);
+            //}
+            //else
+            //{
+            //    mInstruction = new WaitForSeconds(2f);
+            //    ++mTimes;
+            //    StartCoroutine(mCoroutine);
+            //}
             RunTask();
         }
 
@@ -30,12 +47,26 @@ namespace AsyncWork
             //foreach (var obj in objs)
             //    Instantiate(obj);
             Debug.Log("wait 1s");
-            var runner = new Core.WorkerRunner(this);
-            await Core.Awaiter.Wait(new WaitForSeconds(1f), runner);
-            Debug.Log("wait 1s");
-            await Core.Awaiter.Wait(new WaitForSeconds(2f), runner);
+            await Core.Awaiter.Wait(new WaitForSeconds(1f));
+            Debug.Log("wait 2s");
+            await Core.Awaiter.Wait(new WaitForSeconds(2f));
             Debug.Log("ok");
         }
 
+        public IEnumerator RunTask2()
+        {
+            while (true)
+            {
+                Debug.Log("RunTask2 start");
+                if (mInstruction != null)
+                {
+                    yield return mInstruction;
+                }
+                Debug.Log("RunTask2 ok");
+                StopCoroutine(mCoroutine);
+                Debug.Log("RunTask2 Stopped");
+                yield return 0;
+            }
+        }
     }
 }
