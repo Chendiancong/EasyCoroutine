@@ -3,38 +3,25 @@ using AsyncWork.Core;
 
 namespace AsyncWork
 {
-    public class WaitInstruction: IAwaitable, IInstructionCompletable, ICustomInstructionCompletable
+    public class WaitInstruction: WorkerDecorator, IInstructionCompletable, ICustomInstructionCompletable
     {
-        private Worker mWorker;
-
-        public Worker Worker => mWorker;
-
-        public Worker.WorkerAwaiter GetAwaiter()
-        {
-            return mWorker.GetAwaiter();
-        }
-
-        ICustomAwaiter IAwaitable.GetAwaiter() => GetAwaiter();
-
         public void OnComplete(YieldInstruction instruction)
         {
-            mWorker.Resolve();
+            worker.Resolve();
         }
 
         public void OnComplete(CustomYieldInstruction instruction)
         {
-            mWorker.Resolve();
+            worker.Resolve();
         }
 
-        public WaitInstruction(YieldInstruction instruction, IInstructionWaitable runner)
+        public WaitInstruction(YieldInstruction instruction, IInstructionWaitable runner) : base()
         {
-            mWorker = new Worker();
             runner.WaitFor(instruction, this);
         }
 
-        public WaitInstruction(CustomYieldInstruction instruction, IInstructionWaitable runner)
+        public WaitInstruction(CustomYieldInstruction instruction, IInstructionWaitable runner) : base()
         {
-            mWorker = new Worker();
             runner.WaitFor(instruction, this);
         }
     }

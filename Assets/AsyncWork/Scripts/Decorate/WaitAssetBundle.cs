@@ -1,24 +1,13 @@
-using System.Text;
 using UnityEngine;
 using AsyncWork.Core;
 
 namespace AsyncWork
 {
-    public class WaitAssetBundle<T> : IAwaitable<T>, IInstructionCompletable
+    public class WaitAssetBundle<T> : WorkerDecorator<T>, IInstructionCompletable
         where T : UnityEngine.Object
     {
-        private Worker<T> mWorker;
         private IInstructionWaitable mWaitable;
         private string assetName = "";
-
-        public Worker<T> Worker => mWorker;
-
-        public Worker<T>.WorkerAwaiter GetAwaiter()
-        {
-            return mWorker.GetAwaiter();
-        }
-
-        ICustomAwaiter<T> IAwaitable<T>.GetAwaiter() => GetAwaiter();
 
         public WaitAssetBundle<T> SetAssetName(string name)
         {
@@ -33,19 +22,17 @@ namespace AsyncWork
             else if (instruction is AssetBundleRequest)
                 HandleRequest(instruction as AssetBundleRequest);
             else
-                mWorker.Resolve(null);
+                worker.Resolve(null);
         }
 
-        public WaitAssetBundle(AssetBundleCreateRequest createReq, IInstructionWaitable waitable)
+        public WaitAssetBundle(AssetBundleCreateRequest createReq, IInstructionWaitable waitable) : base()
         {
-            mWorker = new Worker<T>();
             mWaitable = waitable;
             waitable.WaitFor(createReq, this);
         }
 
-        public WaitAssetBundle(AssetBundleRequest req, IInstructionWaitable waitable)
+        public WaitAssetBundle(AssetBundleRequest req, IInstructionWaitable waitable) : base()
         {
-            mWorker = new Worker<T>();
             mWaitable = waitable;
             waitable.WaitFor(req, this);
         }
@@ -64,9 +51,9 @@ namespace AsyncWork
         private void HandleRequest(AssetBundleRequest request)
         {
             if (string.IsNullOrEmpty(assetName))
-                mWorker.Resolve(request.allAssets.Length > 0 ? request.allAssets[0] as T : null);
+                worker.Resolve(request.allAssets.Length > 0 ? request.allAssets[0] as T : null);
             else
-                mWorker.Resolve(request.asset as T);
+                worker.Resolve(request.asset as T);
         }
     }
 }

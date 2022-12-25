@@ -3,18 +3,10 @@ using AsyncWork.Core;
 
 namespace AsyncWork
 {
-    public class WaitAssetBundleMultiple<T> : IAwaitable<T[]>, IInstructionCompletable
+    public class WaitAssetBundleMultiple<T> : WorkerDecorator<T[]>, IInstructionCompletable
         where T : UnityEngine.Object
     {
-        private Worker<T[]> mWorker;
         private IInstructionWaitable mWaitable;
-
-        public Worker<T[]>.WorkerAwaiter GetAwaiter()
-        {
-            return mWorker.GetAwaiter();
-        }
-
-        ICustomAwaiter<T[]> IAwaitable<T[]>.GetAwaiter() => GetAwaiter();
 
         public void OnComplete(YieldInstruction instruction)
         {
@@ -23,19 +15,17 @@ namespace AsyncWork
             else if (instruction is AssetBundleRequest)
                 HandleRequest(instruction as AssetBundleRequest);
             else
-                mWorker.Resolve(null);
+                worker.Resolve(null);
         }
 
-        public WaitAssetBundleMultiple(AssetBundleCreateRequest createReq, IInstructionWaitable waitable)
+        public WaitAssetBundleMultiple(AssetBundleCreateRequest createReq, IInstructionWaitable waitable) : base()
         {
-            mWorker = new Worker<T[]>();
             mWaitable = waitable;
             waitable.WaitFor(createReq, this);
         }
 
-        public WaitAssetBundleMultiple(AssetBundleRequest req, IInstructionWaitable waitable)
+        public WaitAssetBundleMultiple(AssetBundleRequest req, IInstructionWaitable waitable) : base()
         {
-            mWorker = new Worker<T[]>();
             mWaitable = waitable;
             waitable.WaitFor(req, this);
 
@@ -50,7 +40,7 @@ namespace AsyncWork
 
         private void HandleRequest(AssetBundleRequest req)
         {
-            mWorker.Resolve(req.allAssets as T[]);
+            worker.Resolve(req.allAssets as T[]);
         }
     }
 }
