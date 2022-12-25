@@ -2,8 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using AsyncWork.Core;
 
-namespace AsyncWork.Core
+namespace AsyncWork
 {
     public class WorkerRunner : IInstructionWaitable
     {

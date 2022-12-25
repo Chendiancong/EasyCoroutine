@@ -1,7 +1,8 @@
 using UnityEngine;
 using DCFramework.SingleTon;
+using AsyncWork.Core;
 
-namespace AsyncWork.Core
+namespace AsyncWork
 {
     public class WorkerRunnerBehaviour : SingleBehaviour<WorkerRunnerBehaviour>, IInstructionWaitable
     {

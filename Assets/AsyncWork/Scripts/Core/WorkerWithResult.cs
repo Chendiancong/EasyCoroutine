@@ -6,6 +6,12 @@ namespace AsyncWork.Core
     {
         private TResult mResult;
 
+        public Worker()
+        {
+            Callback = new WorkerCallback<TResult>();
+            Start();
+        }
+
         public Worker(Action<WorkerResolve<TResult>> action)
         {
             Callback = new WorkerCallback<TResult>();
@@ -27,7 +33,7 @@ namespace AsyncWork.Core
 
         ICustomAwaiter<TResult> IAwaitable<TResult>.GetAwaiter() => GetAwaiter();
 
-        private void Resolve(TResult result)
+        public void Resolve(TResult result)
         {
             mResult = result;
             (Callback as WorkerCallback<TResult>).OnFullfilled(result);
@@ -38,7 +44,7 @@ namespace AsyncWork.Core
             }
         }
 
-        private void Reject(int errCode)
+        public void Reject(int errCode)
         {
             (Callback as WorkerCallback<TResult>).OnRejected(errCode);
         }

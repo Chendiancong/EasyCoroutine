@@ -1,3 +1,4 @@
+using System.IO;
 using System.Collections;
 using UnityEngine;
 using System.Threading.Tasks;
@@ -48,8 +49,10 @@ namespace AsyncWork
             //    Instantiate(obj);
             Debug.Log("wait 1s");
             await Core.Awaiter.Wait(new WaitForSeconds(1f));
-            Debug.Log("wait 2s");
-            await Core.Awaiter.Wait(new WaitForSeconds(2f));
+            Debug.Log("load asset");
+            var asset = await Core.Awaiter.Load<GameObject>(Application.streamingAssetsPath + Path.DirectorySeparatorChar + "sphere.prefab.asset").SetAssetName("Sphere");
+            Debug.Log($"loaded {asset.name}");
+            Instantiate(asset);
             Debug.Log("ok");
         }
 
