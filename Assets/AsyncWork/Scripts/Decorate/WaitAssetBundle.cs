@@ -4,7 +4,7 @@ using AsyncWork.Core;
 
 namespace AsyncWork
 {
-    public class WaitForAssetBundle<T> : IAwaitable<T>, IInstructionCompletable
+    public class WaitAssetBundle<T> : IAwaitable<T>, IInstructionCompletable
         where T : UnityEngine.Object
     {
         private Worker<T> mWorker;
@@ -20,7 +20,7 @@ namespace AsyncWork
 
         ICustomAwaiter<T> IAwaitable<T>.GetAwaiter() => GetAwaiter();
 
-        public WaitForAssetBundle<T> SetAssetName(string name)
+        public WaitAssetBundle<T> SetAssetName(string name)
         {
             assetName = name.Trim();
             return this;
@@ -36,14 +36,14 @@ namespace AsyncWork
                 mWorker.Resolve(null);
         }
 
-        public WaitForAssetBundle(AssetBundleCreateRequest createReq, IInstructionWaitable waitable)
+        public WaitAssetBundle(AssetBundleCreateRequest createReq, IInstructionWaitable waitable)
         {
             mWorker = new Worker<T>();
             mWaitable = waitable;
             waitable.WaitFor(createReq, this);
         }
 
-        public WaitForAssetBundle(AssetBundleRequest req, IInstructionWaitable waitable)
+        public WaitAssetBundle(AssetBundleRequest req, IInstructionWaitable waitable)
         {
             mWorker = new Worker<T>();
             mWaitable = waitable;

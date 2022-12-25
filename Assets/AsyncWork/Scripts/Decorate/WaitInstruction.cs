@@ -3,7 +3,7 @@ using AsyncWork.Core;
 
 namespace AsyncWork
 {
-    public class WaitForInstruction: IAwaitable, IInstructionCompletable, ICustomInstructionCompletable
+    public class WaitInstruction: IAwaitable, IInstructionCompletable, ICustomInstructionCompletable
     {
         private Worker mWorker;
 
@@ -26,13 +26,13 @@ namespace AsyncWork
             mWorker.Resolve();
         }
 
-        public WaitForInstruction(YieldInstruction instruction, IInstructionWaitable runner)
+        public WaitInstruction(YieldInstruction instruction, IInstructionWaitable runner)
         {
             mWorker = new Worker();
             runner.WaitFor(instruction, this);
         }
 
-        public WaitForInstruction(CustomYieldInstruction instruction, IInstructionWaitable runner)
+        public WaitInstruction(CustomYieldInstruction instruction, IInstructionWaitable runner)
         {
             mWorker = new Worker();
             runner.WaitFor(instruction, this);

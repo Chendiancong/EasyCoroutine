@@ -17,5 +17,10 @@ namespace AsyncWork.Core
             if (Status == WorkerStatus.Waiting)
                 Status = WorkerStatus.Running;
         }
+
+        public virtual void Reset()
+        {
+            Status = WorkerStatus.Waiting;
+        }
     }
 }

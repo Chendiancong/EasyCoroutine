@@ -47,12 +47,22 @@ namespace AsyncWork
             //var objs = await ab.LoadAssetAsync("Sphere").WrapMultiple<GameObject>();
             //foreach (var obj in objs)
             //    Instantiate(obj);
-            Debug.Log("wait 1s");
-            await Core.Awaiter.Wait(new WaitForSeconds(1f));
-            Debug.Log("load asset");
-            var asset = await Core.Awaiter.Load<GameObject>(Application.streamingAssetsPath + Path.DirectorySeparatorChar + "sphere.prefab.asset").SetAssetName("Sphere");
-            Debug.Log($"loaded {asset.name}");
-            Instantiate(asset);
+
+            //Debug.Log("wait 1s");
+            //await Core.Awaiter.Wait(new WaitForSeconds(1f));
+            //Debug.Log("load asset");
+            //var asset = await Core.Awaiter.Load<GameObject>(Application.streamingAssetsPath + Path.DirectorySeparatorChar + "sphere.prefab.asset").SetAssetName("Sphere");
+            //Debug.Log($"loaded {asset.name}");
+            //Instantiate(asset);
+            //Debug.Log("ok");
+
+            var ins = new WaitForSeconds(1f);
+            for (int i = 0; i < 5; ++i)
+            {
+                Debug.Log("Wait 1s...");
+                await ins;
+                //await Core.Awaiter.Wait(ins);
+            }
             Debug.Log("ok");
         }
 

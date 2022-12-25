@@ -80,8 +80,6 @@ namespace AsyncWork
                         break;
                 }
 
-                mItems[id].Clear();
-
                 switch (item.type)
                 {
                     case 1:
@@ -95,7 +93,7 @@ namespace AsyncWork
                         mFreeIds.Push(id);
                         break;
                 }
-
+                mItems[id].Clear();
 
                 yield return 0;
             }

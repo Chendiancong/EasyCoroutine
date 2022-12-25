@@ -3,7 +3,7 @@ using AsyncWork.Core;
 
 namespace AsyncWork
 {
-    public class WaitForAssetBundleMultiple<T> : IAwaitable<T[]>, IInstructionCompletable
+    public class WaitAssetBundleMultiple<T> : IAwaitable<T[]>, IInstructionCompletable
         where T : UnityEngine.Object
     {
         private Worker<T[]> mWorker;
@@ -26,14 +26,14 @@ namespace AsyncWork
                 mWorker.Resolve(null);
         }
 
-        public WaitForAssetBundleMultiple(AssetBundleCreateRequest createReq, IInstructionWaitable waitable)
+        public WaitAssetBundleMultiple(AssetBundleCreateRequest createReq, IInstructionWaitable waitable)
         {
             mWorker = new Worker<T[]>();
             mWaitable = waitable;
             waitable.WaitFor(createReq, this);
         }
 
-        public WaitForAssetBundleMultiple(AssetBundleRequest req, IInstructionWaitable waitable)
+        public WaitAssetBundleMultiple(AssetBundleRequest req, IInstructionWaitable waitable)
         {
             mWorker = new Worker<T[]>();
             mWaitable = waitable;
