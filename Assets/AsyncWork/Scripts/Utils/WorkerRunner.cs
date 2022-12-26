@@ -91,10 +91,11 @@ namespace AsyncWork
                     default:
                         mHost.StopCoroutine(item.target);
                         mFreeIds.Push(id);
-                        break;
+                        goto WAIT_NEXT;
                 }
                 mItems[id].Clear();
 
+                WAIT_NEXT:
                 yield return 0;
             }
         }

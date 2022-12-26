@@ -36,7 +36,8 @@ namespace AsyncWork
             Debug.Log("load asset");
             string path = Application.streamingAssetsPath + Path.DirectorySeparatorChar + "sphere.prefab.asset";
             GameObject asset = await Awaiter.Load<GameObject>(path)
-                                        .SetAssetName("Sphere");
+                                        .SetAssetName("Sphere")
+                                        .SetUnloadBundle(false);
             Debug.Log($"loaded {asset.name}");
             Instantiate(asset);
             Debug.Log("ok");

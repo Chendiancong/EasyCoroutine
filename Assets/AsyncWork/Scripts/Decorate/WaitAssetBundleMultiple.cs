@@ -7,6 +7,8 @@ namespace AsyncWork
         where T : UnityEngine.Object
     {
         private IInstructionWaitable mWaitable;
+        private bool mUnloadBundle = true;
+        private AssetBundle mCurBundle;
 
         public void OnComplete(YieldInstruction instruction)
         {
@@ -34,6 +36,7 @@ namespace AsyncWork
         private void HandleCreateRequest(AssetBundleCreateRequest request)
         {
             AssetBundle bundle = request.assetBundle;
+            mCurBundle = bundle;
             AssetBundleRequest req = bundle.LoadAllAssetsAsync();
             mWaitable.WaitFor(req, this);
         }
@@ -41,6 +44,9 @@ namespace AsyncWork
         private void HandleRequest(AssetBundleRequest req)
         {
             worker.Resolve(req.allAssets as T[]);
+            if (mUnloadBundle && mCurBundle != null)
+                mCurBundle.Unload(false);
+            mCurBundle = null;
         }
     }
 }

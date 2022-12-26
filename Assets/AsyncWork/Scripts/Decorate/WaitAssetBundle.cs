@@ -7,11 +7,19 @@ namespace AsyncWork
         where T : UnityEngine.Object
     {
         private IInstructionWaitable mWaitable;
-        private string assetName = "";
+        private string mAssetName = "";
+        private bool mUnloadBundle = true;
+        private AssetBundle mCurBundle;
 
         public WaitAssetBundle<T> SetAssetName(string name)
         {
-            assetName = name.Trim();
+            mAssetName = name.Trim();
+            return this;
+        }
+
+        public WaitAssetBundle<T> SetUnloadBundle(bool flag)
+        {
+            mUnloadBundle = flag;
             return this;
         }
 
@@ -40,20 +48,24 @@ namespace AsyncWork
         private void HandleCreateRequest(AssetBundleCreateRequest request)
         {
             AssetBundle bundle = request.assetBundle;
+            mCurBundle = bundle;
             AssetBundleRequest req;
-            if (string.IsNullOrEmpty(assetName))
+            if (string.IsNullOrEmpty(mAssetName))
                 req = bundle.LoadAllAssetsAsync();
             else
-                req = bundle.LoadAssetAsync(assetName);
+                req = bundle.LoadAssetAsync(mAssetName);
             mWaitable.WaitFor(req, this);
         }
 
         private void HandleRequest(AssetBundleRequest request)
         {
-            if (string.IsNullOrEmpty(assetName))
+            if (string.IsNullOrEmpty(mAssetName))
                 worker.Resolve(request.allAssets.Length > 0 ? request.allAssets[0] as T : null);
             else
                 worker.Resolve(request.asset as T);
+            if (mUnloadBundle && mCurBundle != null)
+                mCurBundle.Unload(false);
+            mCurBundle = null;
         }
     }
 }
