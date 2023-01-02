@@ -45,25 +45,40 @@ namespace AsyncWork.Core
 
         private void InternalResolve()
         {
-            WorkerStatus status = Status;
-            if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
-                return;
-            Status = WorkerStatus.Succeed;
-            (Callback as WorkerCallback).OnFullfilled();
-            if (continuations != null)
+            try
             {
-                continuations();
-                continuations = null;
+                WorkerStatus status = Status;
+                if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
+                    return;
+                Status = WorkerStatus.Succeed;
+                (Callback as WorkerCallback).OnFullfilled();
+                if (continuations != null)
+                    continuations();
+            }
+            catch { throw; }
+            finally
+            {
+                if (continuations != null)
+                    continuations = null;
             }
         }
 
         private void InternalReject(WorkerException e)
         {
-            WorkerStatus status = Status;
-            if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
-                return;
-            Status = WorkerStatus.Failed;
-            (Callback as WorkerCallback).OnRejected(e);
+            try
+            {
+                WorkerStatus status = Status;
+                if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
+                    return;
+                Status = WorkerStatus.Failed;
+                (Callback as WorkerCallback).OnRejected(e);
+            }
+            catch { throw; }
+            finally
+            {
+                if (continuations != null)
+                    continuations = null;
+            }
         }
 
         public struct WorkerAwaiter : ICustomAwaiter

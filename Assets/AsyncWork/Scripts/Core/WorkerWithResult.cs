@@ -39,34 +39,43 @@ namespace AsyncWork.Core
 
         public void OnRestore() { }
 
-        public void Resolve(TResult result)
+        public void Resolve(TResult result) => InternalResolve(result);
+
+        public void Reject(WorkerException e) => InternalReject(e);
+
+        private void InternalResolve(TResult result)
         {
             mResult = result;
             try
             {
+                WorkerStatus status = Status;
+                if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
+                    return;
+                Status = WorkerStatus.Succeed;
                 (Callback as WorkerCallback<TResult>).OnFullfilled(result);
-            } catch
-            {
-                throw;
-            } finally
+                if (continuations != null)
+                    continuations();
+            }
+            catch { throw; }
+            finally
             {
                 if (continuations != null)
-                {
-                    continuations();
                     continuations = null;
-                }
             }
         }
 
-        public void Reject(WorkerException e)
+        private void InternalReject(WorkerException e)
         {
             try
             {
+                WorkerStatus status = Status;
+                if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
+                    return;
+                Status = WorkerStatus.Failed;
                 (Callback as WorkerCallback<TResult>).OnRejected(e);
-            } catch
-            {
-                throw;
-            } finally
+            }
+            catch { throw; }
+            finally
             {
                 if (continuations != null)
                     continuations = null;
