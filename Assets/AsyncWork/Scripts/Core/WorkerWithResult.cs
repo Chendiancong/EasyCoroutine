@@ -1,10 +1,12 @@
 using System;
+using DCFramework;
 
 namespace AsyncWork.Core
 {
-    public class Worker<TResult> : WorkerBase, IAwaitable<TResult>
+    public class Worker<TResult> : WorkerBase, IAwaitable<TResult>, IPoolable
     {
         private TResult mResult;
+        private WorkerAction mWorkerAction = new WorkerAction();
 
         public Worker()
         {
@@ -12,18 +14,16 @@ namespace AsyncWork.Core
             Start();
         }
 
-        public Worker(Action<WorkerResolve<TResult>> action)
+        public Worker(Action<Action<TResult>> action)
         {
             Callback = new WorkerCallback<TResult>();
-            action(Resolve);
-            Start();
+            mWorkerAction.action1 = action;
         }
 
-        public Worker(Action<WorkerResolve<TResult>, WorkerReject> action)
+        public Worker(Action<Action<TResult>, Action<WorkerException>> action)
         {
             Callback = new WorkerCallback<TResult>();
-            action(Resolve, Reject);
-            Start();
+            mWorkerAction.action2 = action;
         }
 
         public WorkerAwaiter GetAwaiter()
@@ -33,20 +33,44 @@ namespace AsyncWork.Core
 
         ICustomAwaiter<TResult> IAwaitable<TResult>.GetAwaiter() => GetAwaiter();
 
+        public void OnCreate() { }
+
+        public void OnReuse() { }
+
+        public void OnRestore() { }
+
         public void Resolve(TResult result)
         {
             mResult = result;
-            (Callback as WorkerCallback<TResult>).OnFullfilled(result);
-            if (continuations != null)
+            try
             {
-                continuations();
-                continuations = null;
+                (Callback as WorkerCallback<TResult>).OnFullfilled(result);
+            } catch
+            {
+                throw;
+            } finally
+            {
+                if (continuations != null)
+                {
+                    continuations();
+                    continuations = null;
+                }
             }
         }
 
-        public void Reject(int errCode)
+        public void Reject(WorkerException e)
         {
-            (Callback as WorkerCallback<TResult>).OnRejected(errCode);
+            try
+            {
+                (Callback as WorkerCallback<TResult>).OnRejected(e);
+            } catch
+            {
+                throw;
+            } finally
+            {
+                if (continuations != null)
+                    continuations = null;
+            }
         }
 
         public struct WorkerAwaiter : ICustomAwaiter<TResult>
@@ -57,6 +81,15 @@ namespace AsyncWork.Core
             {
                 get
                 {
+                    mWorker.Start();
+
+                    ref WorkerAction wAction = ref mWorker.mWorkerAction;
+                    if (wAction.action1 != null)
+                        wAction.action1(mWorker.Resolve);
+                    else if (wAction.action2 != null)
+                        wAction.action2(mWorker.Resolve, mWorker.Reject);
+                    wAction.Clear();
+
                     WorkerStatus status = mWorker.Status;
                     return status == WorkerStatus.Succeed ||
                         status == WorkerStatus.Failed;
@@ -76,6 +109,18 @@ namespace AsyncWork.Core
             public void OnCompleted(Action continuation)
             {
                 mWorker.continuations += continuation;
+            }
+        }
+
+        private struct WorkerAction
+        {
+            public Action<Action<TResult>> action1;
+            public Action<Action<TResult>, Action<WorkerException>> action2;
+
+            public void Clear()
+            {
+                action1 = null;
+                action2 = null;
             }
         }
     }

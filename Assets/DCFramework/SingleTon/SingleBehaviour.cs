@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCFramework.SingleTon
+namespace DCFramework
 {
     public abstract class SingleBehaviour<T> : MonoBehaviour
         where T : SingleBehaviour<T>

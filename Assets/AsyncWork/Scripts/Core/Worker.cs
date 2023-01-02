@@ -1,29 +1,29 @@
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using DCFramework;
 
 namespace AsyncWork.Core
 {
-    public class Worker : WorkerBase, IAwaitable
+    public class Worker : WorkerBase, IAwaitable, IPoolable
     {
+        private WorkerAction mWorkerAction = new WorkerAction();
+
         public Worker()
         {
             Callback = new WorkerCallback();
-            Start();
         }
 
-        public Worker(Action<WorkerResolve> action)
+        public Worker(Action<Action> action)
         {
             Callback = new WorkerCallback();
-            action(InternalResolve);
-            Start();
+            mWorkerAction.action1 = action;
         }
 
-        public Worker(Action<WorkerResolve, WorkerReject> action)
+        public Worker(Action<Action, Action<WorkerException>> action)
         {
             Callback = new WorkerCallback();
-            action(InternalResolve, InternalReject);
-            Start();
+            mWorkerAction.action2 = action;
         }
 
         public WorkerAwaiter GetAwaiter()
@@ -33,9 +33,15 @@ namespace AsyncWork.Core
 
         ICustomAwaiter IAwaitable.GetAwaiter() => GetAwaiter();
 
+        public void OnCreate() { }
+
+        public void OnReuse() { }
+
+        public void OnRestore() { }
+
         public void Resolve() => InternalResolve();
 
-        public void Reject(int errCode) => InternalReject(errCode);
+        public void Reject(WorkerException e) => InternalReject(e);
 
         private void InternalResolve()
         {
@@ -51,13 +57,13 @@ namespace AsyncWork.Core
             }
         }
 
-        private void InternalReject(int errCode)
+        private void InternalReject(WorkerException e)
         {
             WorkerStatus status = Status;
             if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
                 return;
             Status = WorkerStatus.Failed;
-            (Callback as WorkerCallback).OnRejected(errCode);
+            (Callback as WorkerCallback).OnRejected(e);
         }
 
         public struct WorkerAwaiter : ICustomAwaiter
@@ -68,8 +74,15 @@ namespace AsyncWork.Core
             {
                 get
                 {
-                    if (mWorker == null)
-                        return true;
+                    mWorker.Start();
+
+                    ref WorkerAction wAction = ref mWorker.mWorkerAction;
+                    if (wAction.action1 != null)
+                        wAction.action1(mWorker.InternalResolve);
+                    else if (wAction.action2 != null)
+                        wAction.action2(mWorker.InternalResolve, mWorker.InternalReject);
+                    wAction.Clear();
+
                     WorkerStatus status = mWorker.Status;
                     return status == WorkerStatus.Succeed ||
                         status == WorkerStatus.Failed;
@@ -89,6 +102,17 @@ namespace AsyncWork.Core
             public void GetResult()
             {
 
+            }
+        }
+
+        private struct WorkerAction
+        {
+            public Action<Action> action1;
+            public Action<Action, Action<WorkerException>> action2;
+            public void Clear()
+            {
+                action1 = null;
+                action2 = null;
             }
         }
     }

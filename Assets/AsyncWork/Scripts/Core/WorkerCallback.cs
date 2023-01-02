@@ -2,18 +2,20 @@ using System;
 
 namespace AsyncWork.Core
 {
+    public class WorkerException : Exception { }
+
     public class WorkerCallback : IWorkerCallback
     {
-        private WorkerResolve mFullfilled;
-        private WorkerReject mRejected;
+        private Action mFullfilled;
+        private Action<WorkerException> mRejected;
 
-        public event WorkerResolve Fullfilled
+        public event Action Fullfilled
         {
             add => mFullfilled += value;
             remove => mFullfilled -= value;
         }
 
-        public event WorkerReject Rejected
+        public event Action<WorkerException> Rejected
         {
             add => mRejected += value;
             remove => mRejected -= value;
@@ -25,6 +27,9 @@ namespace AsyncWork.Core
             {
                 if (mFullfilled != null)
                     mFullfilled();
+            } catch (WorkerException e)
+            {
+                OnRejected(e);
             } catch
             {
                 throw;
@@ -35,12 +40,12 @@ namespace AsyncWork.Core
             }
         }
 
-        public void OnRejected(int errCode)
+        public void OnRejected(WorkerException e)
         {
             try
             {
                 if (mRejected != null)
-                    mRejected(errCode);
+                    mRejected(e);
             } catch
             {
                 throw;
@@ -54,16 +59,16 @@ namespace AsyncWork.Core
 
     public class WorkerCallback<TResult> : IWorkerCallback
     {
-        public WorkerResolve<TResult> mFullfilled;
-        public WorkerReject mRejected;
+        public Action<TResult> mFullfilled;
+        public Action<WorkerException> mRejected;
 
-        public event WorkerResolve<TResult> fullfilled
+        public event Action<TResult> fullfilled
         {
             add => mFullfilled += value;
             remove => mFullfilled -= value;
         }
 
-        public event WorkerReject Rejected
+        public event Action<WorkerException> Rejected
         {
             add => mRejected += value;
             remove => mRejected -= value;
@@ -75,6 +80,9 @@ namespace AsyncWork.Core
             {
                 if (mFullfilled != null)
                     mFullfilled(result);
+            } catch (WorkerException e)
+            {
+                mRejected(e);
             } catch
             {
                 throw;
@@ -85,12 +93,12 @@ namespace AsyncWork.Core
             }
         }
 
-        public void OnRejected(int errCode)
+        public void OnRejected(WorkerException e)
         {
             try
             {
                 if (mRejected != null)
-                    mRejected(errCode);
+                    mRejected(e);
             } catch
             {
                 throw;

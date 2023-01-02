@@ -1,5 +1,5 @@
 using UnityEngine;
-using DCFramework.SingleTon;
+using DCFramework;
 using AsyncWork.Core;
 
 namespace AsyncWork
