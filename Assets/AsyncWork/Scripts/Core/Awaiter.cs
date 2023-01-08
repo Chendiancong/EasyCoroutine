@@ -11,7 +11,10 @@ namespace AsyncWork.Core
 
         public static WaitInstruction Wait(YieldInstruction instruction, IInstructionWaitable runner)
         {
-            return new WaitInstruction(instruction, runner);
+            return WaitInstruction
+                .factory
+                .Create()
+                .Start(instruction, runner);
         }
 
         public static WaitInstruction Wait(CustomYieldInstruction instruction)
@@ -21,7 +24,10 @@ namespace AsyncWork.Core
 
         public static WaitInstruction Wait(CustomYieldInstruction instruction, IInstructionWaitable runner)
         {
-            return new WaitInstruction(instruction, runner);
+            return WaitInstruction
+                .factory
+                .Create()
+                .Start(instruction, runner);
         }
 
         public static WaitAssetBundle<T> Load<T>(string path)
@@ -30,11 +36,14 @@ namespace AsyncWork.Core
             return Load<T>(path, WorkerRunnerBehaviour.Instance);
         }
 
-        public static WaitAssetBundle<T> Load<T>(string path, IInstructionWaitable waitable)
+        public static WaitAssetBundle<T> Load<T>(string path, IInstructionWaitable runner)
             where T : UnityEngine.Object
         {
             AssetBundleCreateRequest ab = AssetBundle.LoadFromFileAsync(path);
-            return new WaitAssetBundle<T>(ab, waitable);
+            return WaitAssetBundle<T>
+                .factory
+                .Create()
+                .Start(ab, runner);
         }
 
         public static WaitAssetBundleMultiple<T> LoadMultiple<T>(string path)
@@ -47,7 +56,10 @@ namespace AsyncWork.Core
             where T : UnityEngine.Object
         {
             AssetBundleCreateRequest ab = AssetBundle.LoadFromFileAsync(path);
-            return new WaitAssetBundleMultiple<T>(ab, waitable);
+            return WaitAssetBundleMultiple<T>
+                .factory
+                .Create()
+                .Start(ab, waitable);
         }
     }
 }

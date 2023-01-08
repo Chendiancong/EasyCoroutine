@@ -41,7 +41,7 @@ namespace DCFramework
             {
                 for (int i = 0; i < capacity; ++i)
                 {
-                    T obj = Activator.CreateInstance<T>();
+                    T obj = builder();
                     obj.OnCreate();
                     int key = obj.GetHashCode();
                     mPoolObjs[key] = obj;

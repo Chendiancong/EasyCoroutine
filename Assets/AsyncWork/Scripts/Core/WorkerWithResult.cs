@@ -11,7 +11,6 @@ namespace AsyncWork.Core
         public Worker()
         {
             Callback = new WorkerCallback<TResult>();
-            Start();
         }
 
         public Worker(Action<Action<TResult>> action)
