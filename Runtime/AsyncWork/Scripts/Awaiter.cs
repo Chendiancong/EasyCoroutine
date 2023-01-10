@@ -1,6 +1,7 @@
 using UnityEngine;
+using AsyncWork.Core;
 
-namespace AsyncWork.Core
+namespace AsyncWork
 {
     public static class Awaiter
     {

@@ -1,6 +1,5 @@
 using System.IO;
 using UnityEngine;
-using AsyncWork.Core;
 
 namespace AsyncWork
 {
