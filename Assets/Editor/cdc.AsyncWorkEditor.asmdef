@@ -1,16 +1,15 @@
 {
-    "name": "AsyncWork",
+    "name": "cdc.AsyncWorkEditor",
     "rootNamespace": "",
-    "references": [
-        "GUID:779171111c25e0e48bf7c4eefa21c59a",
-        "GUID:ed6c3927b791a70409ba6c1aca7da6fa"
+    "references": [],
+    "includePlatforms": [
+        "Editor"
     ],
-    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": true,
+    "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false

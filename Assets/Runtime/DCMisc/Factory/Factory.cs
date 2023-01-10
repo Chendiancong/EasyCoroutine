@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DCFramework
+namespace DCMisc
 {
     public interface IPoolable
     {

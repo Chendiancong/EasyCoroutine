@@ -7,7 +7,9 @@ namespace Editor
 {
     public static class BuildUtil
     {
+#if ASYNCWORK_EDITOR
         [MenuItem("BuildUtil/BuildAssetBundles")]
+#endif
         public static void BuildAssetBundls()
         {
             string sourcePath = string.Format("{0}/PackAssets", Application.dataPath);

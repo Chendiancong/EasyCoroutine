@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 
-namespace DCFramework
+namespace DCMisc
 {
     public class SingleTon<T>
         where T : class, new()

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCFramework
+namespace DCMisc
 {
     public abstract class SingleBehaviour<T> : MonoBehaviour
         where T : SingleBehaviour<T>
