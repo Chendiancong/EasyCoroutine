@@ -1,7 +1,0 @@
-ManifestFileVersion: 0
-CRC: 1683598849
-AssetBundleManifest:
-  AssetBundleInfos:
-    Info_0:
-      Name: sphere.prefab.asset
-      Dependencies: {}

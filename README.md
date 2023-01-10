@@ -7,6 +7,8 @@
 这些类型包括：WaitForSeconds, WaitForSecondsRealtime, WaitForEndOfFrame, WaitForFixedUpdate, AssetBundleCreateRequest, AssetBundleRequest
 常见用法：
 ```CSharp
+using namespace AsyncWork.Core;
+
 public async void RunTask()
 {
     Debug.Log("wait 1s");
@@ -33,3 +35,6 @@ public async void RunTask()
 }
 
 ```
+
+# 安装
+通过Unity包管理器安装，可以通过git安装，地址为https://github.com/Chendiancong/TaskFrameworkInUnity.git，也可以clone下来，进行本地安装
