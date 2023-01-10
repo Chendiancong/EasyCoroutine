@@ -1,5 +1,5 @@
 {
-  "name": "com.chendiancong.async_work",
+  "name": "com.cdc-single.async_work",
   "version": "1.0.0",
   "displayName": "Async Work",
   "description": "Unity package for AsyncWork. It allows you to code async/await for unity's instruction instance",
