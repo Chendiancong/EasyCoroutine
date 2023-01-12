@@ -2,12 +2,8 @@ using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace AsyncWork.Core
+namespace EasyCoroutine
 {
-    public delegate void WorkerResolve();
-    public delegate void WorkerResolve<T>(T result);
-    public delegate void WorkerReject(int errCode);
-
     public interface ICustomAwaiter : INotifyCompletion
     {
         bool IsCompleted { get; }

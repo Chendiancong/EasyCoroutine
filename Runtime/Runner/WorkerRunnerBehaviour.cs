@@ -1,8 +1,6 @@
 using UnityEngine;
-using DCMisc;
-using AsyncWork.Core;
 
-namespace AsyncWork
+namespace EasyCoroutine
 {
     public class WorkerRunnerBehaviour : SingleBehaviour<WorkerRunnerBehaviour>, IInstructionWaitable
     {

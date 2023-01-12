@@ -7,7 +7,7 @@
 这些类型包括：WaitForSeconds, WaitForSecondsRealtime, WaitForEndOfFrame, WaitForFixedUpdate, AssetBundleCreateRequest, AssetBundleRequest
 常见用法：
 ```CSharp
-using namespace AsyncWork.Core;
+using namespace EasyCoroutine;
 
 public async void RunTask()
 {
@@ -25,18 +25,19 @@ public async void RunTask()
     }
     Debug.Log("wait 1s");
     await Awaiter.Wait(instruction);
-    Debug.Log("load asset");
-    string path = Application.streamingAssetsPath + Path.DirectorySeparatorChar + "sphere.prefab.asset";
-    GameObject asset = await Awaiter.Load<GameObject>(path)
-                                .SetAssetName("Sphere");
-    Debug.Log($"loaded {asset.name}");
-    Instantiate(asset);
+    // Debug.Log("load asset");
+    // string path = Application.streamingAssetsPath + Path.DirectorySeparatorChar + "sphere.prefab.asset";
+    // GameObject asset = await Awaiter.Load<GameObject>(path)
+    //                             .SetAssetName("Sphere")
+    //                             .SetUnloadBundle(false);
+    // Debug.Log($"loaded {asset.name}");
+    // Instantiate(asset);
     Debug.Log("ok");
 }
 
 ```
 
 # 安装
-通过Unity包管理器安装
-1.可以通过git安装，地址为https://gitee.com/diancongchen/EasyCoroutine.git 
+通过Unity包管理器安装:   
+1.可以通过git安装，地址为https://gitee.com/diancongchen/EasyCoroutine.git   
 2.也可以clone下来，进行本地安装

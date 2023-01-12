@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-namespace Editor
+namespace EasyCoroutine.Editor
 {
     public static class BuildUtil
     {
-#if ASYNCWORK_EDITOR
+#if EASYCOROUTINE_EDITOR
         [MenuItem("BuildUtil/BuildAssetBundles")]
 #endif
         public static void BuildAssetBundls()

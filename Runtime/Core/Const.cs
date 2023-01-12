@@ -1,4 +1,4 @@
-namespace AsyncWork.Core
+namespace EasyCoroutine
 {
     public enum WorkerStatus
     {

@@ -1,7 +1,4 @@
-using System;
-using System.Reflection;
-
-namespace DCMisc
+namespace EasyCoroutine
 {
     public class SingleTon<T>
         where T : class, new()

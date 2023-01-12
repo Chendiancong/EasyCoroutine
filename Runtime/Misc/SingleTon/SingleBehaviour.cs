@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCMisc
+namespace EasyCoroutine
 {
     public abstract class SingleBehaviour<T> : MonoBehaviour
         where T : SingleBehaviour<T>

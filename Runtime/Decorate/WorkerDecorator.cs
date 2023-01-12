@@ -1,7 +1,6 @@
 using System;
-using AsyncWork.Core;
 
-namespace AsyncWork
+namespace EasyCoroutine
 {
     public abstract class WorkerDecorator : IAwaitable
     {

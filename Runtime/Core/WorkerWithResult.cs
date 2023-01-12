@@ -1,7 +1,6 @@
 using System;
-using DCMisc;
 
-namespace AsyncWork.Core
+namespace EasyCoroutine
 {
     public class Worker<TResult> : WorkerBase, IAwaitable<TResult>, IPoolable
     {

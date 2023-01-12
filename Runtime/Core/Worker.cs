@@ -1,9 +1,6 @@
 using System;
-using System.Runtime.CompilerServices;
-using UnityEngine;
-using DCMisc;
 
-namespace AsyncWork.Core
+namespace EasyCoroutine
 {
     public class Worker : WorkerBase, IAwaitable, IPoolable
     {

@@ -1,9 +1,6 @@
-using System;
 using UnityEngine;
-using AsyncWork.Core;
-using DCMisc;
 
-namespace AsyncWork
+namespace EasyCoroutine
 {
     public class WaitInstruction: WorkerDecorator, IInstructionCompletable, ICustomInstructionCompletable, IPoolable
     {

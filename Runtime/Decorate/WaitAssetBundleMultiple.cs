@@ -1,8 +1,6 @@
 using UnityEngine;
-using AsyncWork.Core;
-using DCMisc;
 
-namespace AsyncWork
+namespace EasyCoroutine
 {
     public class WaitAssetBundleMultiple<T> : WorkerDecorator<T[]>, IInstructionCompletable, IPoolable
         where T : UnityEngine.Object

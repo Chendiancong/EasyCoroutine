@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DCMisc
+namespace EasyCoroutine
 {
     public interface IPoolable
     {

@@ -1,6 +1,6 @@
 using System;
 
-namespace AsyncWork.Core
+namespace EasyCoroutine
 {
     public class WorkerException : Exception { }
 
