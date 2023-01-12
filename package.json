@@ -1,12 +1,13 @@
 {
-  "name": "com.cdc-single.async_work",
+  "name": "com.cdc-single.easy_coroutine",
   "version": "1.0.0",
-  "displayName": "Async Work",
-  "description": "Unity package for AsyncWork. It allows you to code async/await for unity's instruction instance",
+  "displayName": "Easy Coroutine",
+  "description": "Unity package for extending async/await. It allows you to code async/await for unity's yielding instruction",
   "unity": "2020.3",
   "keywords": [
-    "async",
-    "asyncwork"
+    "easycoroutine",
+    "easy",
+    "coroutine"
   ],
   "author": {
     "name": "chendiancong",
