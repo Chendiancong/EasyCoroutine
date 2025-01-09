@@ -6,7 +6,7 @@ namespace EasyCoroutine
         public static readonly T instance = new T();
 
         /// <summary>
-        /// ¾²Ì¬¹¹Ôìº¯Êı·ÀÖ¹beforeInit£¬instanceÔÚ±»·ÃÎÊµÄÊ±ºò²Å½øĞĞ³õÊ¼»¯
+        /// é™æ€æ„é€ å‡½æ•°é˜²æ­¢beforeInitï¼Œinstanceåœ¨è¢«è®¿é—®çš„æ—¶å€™æ‰è¿›è¡Œåˆå§‹åŒ–
         /// </summary>
         static SingleTon() { }
 

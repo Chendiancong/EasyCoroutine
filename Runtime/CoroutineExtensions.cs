@@ -22,12 +22,12 @@ namespace EasyCoroutine
         public static Worker.WorkerAwaiter GetAwaiter(this WaitWhile instruction) =>
             Awaiter.Wait(instruction).GetAwaiter();
 
-        public static Worker<T>.WorkerAwaiter GetAwaiter<T>(this AssetBundleCreateRequest request)
+        public static Worker<BundleAssetResult<T>>.WorkerAwaiter GetAwaiter<T>(this BundleAssetLoader loader)
             where T : UnityEngine.Object
-            => new WaitAssetBundle<T>(request, WorkerRunnerBehaviour.Instance).GetAwaiter();
+            => Awaiter.Load<T>(loader).GetAwaiter();
 
-        public static Worker<T>.WorkerAwaiter GetAwaiter<T>(this AssetBundleRequest request)
+        public static Worker<BundleAssetMultipleResult<T>>.WorkerAwaiter GetAwaiter<T>(this BundleAssetMultipleLoader loader)
             where T : UnityEngine.Object
-            => new WaitAssetBundle<T>(request, WorkerRunnerBehaviour.Instance).GetAwaiter();
+            => Awaiter.Load<T>(loader).GetAwaiter();
     }
 }

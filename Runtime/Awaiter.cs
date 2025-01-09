@@ -30,36 +30,34 @@ namespace EasyCoroutine
                 .Start(instruction, runner);
         }
 
-        public static WaitAssetBundle<T> Load<T>(string path)
+        public static WaitBundleAsset<T> Load<T>(BundleAssetLoader loader)
             where T : UnityEngine.Object
-        {
-            return Load<T>(path, WorkerRunnerBehaviour.Instance);
-        }
+            => Load<T>(loader, WorkerRunnerBehaviour.Instance);
 
-        public static WaitAssetBundle<T> Load<T>(string path, IInstructionWaitable runner)
+        public static WaitBundleAsset<T> Load<T>(BundleAssetLoader loader, IInstructionWaitable runner)
             where T : UnityEngine.Object
         {
-            AssetBundleCreateRequest ab = AssetBundle.LoadFromFileAsync(path);
-            return WaitAssetBundle<T>
+            AssetBundleCreateRequest abr = AssetBundle.LoadFromFileAsync(loader.path);
+            return WaitBundleAsset<T>
                 .factory
                 .Create()
-                .Start(ab, runner);
+                .SetLoader(loader)
+                .Start(abr, runner);
         }
 
-        public static WaitAssetBundleMultiple<T> LoadMultiple<T>(string path)
+        public static WaitBundleAssetMultiple<T> Load<T>(BundleAssetMultipleLoader loader)
             where T : UnityEngine.Object
-        {
-            return LoadMultiple<T>(path, WorkerRunnerBehaviour.Instance);
-        }
+            => Load<T>(loader, WorkerRunnerBehaviour.Instance);
 
-        public static WaitAssetBundleMultiple<T> LoadMultiple<T>(string path, IInstructionWaitable waitable)
+        public static WaitBundleAssetMultiple<T> Load<T>(BundleAssetMultipleLoader loader, IInstructionWaitable runner)
             where T : UnityEngine.Object
         {
-            AssetBundleCreateRequest ab = AssetBundle.LoadFromFileAsync(path);
-            return WaitAssetBundleMultiple<T>
+            AssetBundleCreateRequest abr = AssetBundle.LoadFromFileAsync(loader.path);
+            return WaitBundleAssetMultiple<T>
                 .factory
                 .Create()
-                .Start(ab, waitable);
+                .SetLoader(loader)
+                .Start(abr, runner);
         }
     }
 }
