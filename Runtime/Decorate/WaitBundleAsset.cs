@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace EasyCoroutine
@@ -11,11 +12,11 @@ namespace EasyCoroutine
         static WaitBundleAsset() { }
 
         private IInstructionWaitable mWaitable;
-        private BundleAssetLoader mLoader;
+        private BundleAssetLoader<T> mLoader;
         private bool mIsPool;
         private AssetBundle mCurBundle;
 
-        public WaitBundleAsset<T> SetLoader(BundleAssetLoader loader)
+        public WaitBundleAsset<T> SetLoader(BundleAssetLoader<T> loader)
         {
             mLoader = loader;
             return this;
@@ -28,11 +29,7 @@ namespace EasyCoroutine
             else if (instruction is AssetBundleRequest)
                 HandleRequest(instruction as AssetBundleRequest);
             else
-            {
-                worker.Resolve(default);
-                if (mIsPool)
-                    factory.Restore(this);
-            }
+                InternalResolve(default);
         }
 
         public void OnCreate()
@@ -88,6 +85,10 @@ namespace EasyCoroutine
 
         private void HandleCreateRequest(AssetBundleCreateRequest request)
         {
+            if (!request.isDone)
+            {
+                
+            }
             AssetBundle bundle = request.assetBundle;
             mCurBundle = bundle;
             AssetBundleRequest req;
@@ -110,18 +111,33 @@ namespace EasyCoroutine
             AssetBundle bundle = mCurBundle;
             mCurBundle = null;
 
-            worker.Resolve(new BundleAssetResult<T>{
+            InternalResolve(new BundleAssetResult<T> {
                 asset = targetAsset,
                 bundleValid = !mLoader.autoUnloadBundle,
                 assetBundle = bundle
             });
+        }
+
+        private void InternalResolve(BundleAssetResult<T> result)
+        {
+            worker.Resolve(result);
+            if (mIsPool)
+                factory.Restore(this);
+        }
+
+        private void InternalReject(WorkerException exception)
+        {
+            worker.Reject(exception);
+            if (mIsPool)
+                factory.Restore(this);
         }
     }
 
     /// <summary>
     /// 单一AssetBundle资源请求
     /// </summary>
-    public struct BundleAssetLoader
+    public struct BundleAssetLoader<Asset> : IAwaitable<BundleAssetResult<Asset>>
+        where Asset : UnityEngine.Object
     {
         /// <summary>
         /// bundle的url
@@ -135,6 +151,12 @@ namespace EasyCoroutine
         /// 是否释放asset bundle
         /// </summary>
         public bool autoUnloadBundle;
+
+        public Worker<BundleAssetResult<Asset>>.WorkerAwaiter GetAwaiter() =>
+            Awaiter.Load(this).GetAwaiter();
+
+        ICustomAwaiter<BundleAssetResult<Asset>> IAwaitable<BundleAssetResult<Asset>>.GetAwaiter() =>
+            GetAwaiter();
     }
 
     /// <summary>

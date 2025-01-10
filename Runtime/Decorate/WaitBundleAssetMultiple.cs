@@ -11,11 +11,11 @@ namespace EasyCoroutine
         static WaitBundleAssetMultiple() { }
 
         private IInstructionWaitable mWaitable;
-        private BundleAssetMultipleLoader mLoader;
+        private BundleAssetMultipleLoader<T> mLoader;
         private bool mIsPool;
         private AssetBundle mCurBundle;
 
-        public WaitBundleAssetMultiple<T> SetLoader(BundleAssetMultipleLoader loader)
+        public WaitBundleAssetMultiple<T> SetLoader(BundleAssetMultipleLoader<T> loader)
         {
             mLoader = loader;
             return this;
@@ -112,7 +112,8 @@ namespace EasyCoroutine
     /// <summary>
     /// 复合AssetBundle资源请求
     /// </summary>
-    public struct BundleAssetMultipleLoader
+    public struct BundleAssetMultipleLoader<Asset> : IAwaitable<BundleAssetMultipleResult<Asset>>
+        where Asset : UnityEngine.Object
     {
         /// <summary>
         /// bundle的Url
@@ -122,6 +123,12 @@ namespace EasyCoroutine
         /// 是否自动释放asset bundle
         /// </summary>
         public bool autoUnloadBundle;
+
+        public Worker<BundleAssetMultipleResult<Asset>>.WorkerAwaiter GetAwaiter() =>
+            Awaiter.Load(this).GetAwaiter();
+
+        ICustomAwaiter<BundleAssetMultipleResult<Asset>> IAwaitable<BundleAssetMultipleResult<Asset>>.GetAwaiter() =>
+            GetAwaiter();
     }
 
     /// <summary>

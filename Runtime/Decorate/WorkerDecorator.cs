@@ -6,7 +6,6 @@ namespace EasyCoroutine
     {
         protected Worker worker;
         protected Type type;
-        protected bool isPool;
 
         public Worker Worker => worker;
 
@@ -28,7 +27,6 @@ namespace EasyCoroutine
     {
         protected Worker<T> worker;
         protected Type type;
-        protected bool isPool;
 
         public Worker<T> Worker => worker;
 

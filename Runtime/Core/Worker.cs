@@ -49,8 +49,7 @@ namespace EasyCoroutine
                     return;
                 Status = WorkerStatus.Succeed;
                 (Callback as WorkerCallback).OnFullfilled();
-                if (continuations != null)
-                    continuations();
+                InternalContinue();
             }
             catch { throw; }
             finally
@@ -76,6 +75,11 @@ namespace EasyCoroutine
                 if (continuations != null)
                     continuations = null;
             }
+        }
+
+        private void InternalContinue() {
+            if (continuations != null)
+                continuations();
         }
 
         public struct WorkerAwaiter : ICustomAwaiter

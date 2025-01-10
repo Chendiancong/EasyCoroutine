@@ -7,4 +7,10 @@ namespace EasyCoroutine
         Succeed,
         Failed,
     }
+
+    public enum CompletableStatus
+    {
+        Success,
+        Fail
+    }
 }

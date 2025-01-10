@@ -28,7 +28,6 @@ namespace EasyCoroutine
         ICustomAwaiter<TResult> GetAwaiter();
     }
 
-
     public interface IInstructionCompletable
     {
         void OnComplete(YieldInstruction instruction);

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace EasyCoroutine
 {
@@ -13,10 +14,11 @@ namespace EasyCoroutine
 
         public void Doit()
         {
-            RunTask();
+            RunTask()
+                .ContinueWith(_ => Debug.Log("RunTask ok!"));
         }
 
-        public async void RunTask()
+        public async Task RunTask()
         {
             // Debug.Log("wait 1s");
             // await new WaitForSeconds(1f);
@@ -40,6 +42,15 @@ namespace EasyCoroutine
             // //Debug.Log($"loaded {asset.name}");
             // //Instantiate(asset);
             // Debug.Log("ok");
+            var loader = new BundleAssetLoader<GameObject>
+            {
+                path = $"{Application.streamingAssetsPath}{Path.DirectorySeparatorChar}sphere.prefab.asset",
+                assetName = "Sphere",
+                autoUnloadBundle = true
+            };
+            var result = await loader;
+            Debug.Log($"loaded {result.asset.name}");
+            Instantiate(result.asset);
         }
     }
 }

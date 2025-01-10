@@ -30,11 +30,11 @@ namespace EasyCoroutine
                 .Start(instruction, runner);
         }
 
-        public static WaitBundleAsset<T> Load<T>(BundleAssetLoader loader)
+        public static WaitBundleAsset<T> Load<T>(BundleAssetLoader<T> loader)
             where T : UnityEngine.Object
             => Load<T>(loader, WorkerRunnerBehaviour.Instance);
 
-        public static WaitBundleAsset<T> Load<T>(BundleAssetLoader loader, IInstructionWaitable runner)
+        public static WaitBundleAsset<T> Load<T>(BundleAssetLoader<T> loader, IInstructionWaitable runner)
             where T : UnityEngine.Object
         {
             AssetBundleCreateRequest abr = AssetBundle.LoadFromFileAsync(loader.path);
@@ -45,11 +45,11 @@ namespace EasyCoroutine
                 .Start(abr, runner);
         }
 
-        public static WaitBundleAssetMultiple<T> Load<T>(BundleAssetMultipleLoader loader)
+        public static WaitBundleAssetMultiple<T> Load<T>(BundleAssetMultipleLoader<T> loader)
             where T : UnityEngine.Object
             => Load<T>(loader, WorkerRunnerBehaviour.Instance);
 
-        public static WaitBundleAssetMultiple<T> Load<T>(BundleAssetMultipleLoader loader, IInstructionWaitable runner)
+        public static WaitBundleAssetMultiple<T> Load<T>(BundleAssetMultipleLoader<T> loader, IInstructionWaitable runner)
             where T : UnityEngine.Object
         {
             AssetBundleCreateRequest abr = AssetBundle.LoadFromFileAsync(loader.path);
