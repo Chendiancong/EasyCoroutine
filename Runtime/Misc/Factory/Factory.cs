@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using PlasticPipe.PlasticProtocol.Messages;
 
 namespace EasyCoroutine
 {
@@ -10,7 +11,17 @@ namespace EasyCoroutine
         void OnRestore();
     }
 
-    public class Factory<T>
+    public interface ICustomFactory
+    {
+        object Create();
+    }
+
+    public interface ICustomFactoryWithPool : ICustomFactory
+    {
+        void Restore(object obj);
+    }
+
+    public class Factory<T> : ICustomFactory
         where T : class, new()
     {
         protected Func<T> builder;
@@ -24,9 +35,11 @@ namespace EasyCoroutine
         {
             return builder();
         }
+
+        object ICustomFactory.Create() => Create();
     }
 
-    public class FactoryWithPool<T> : Factory<T>
+    public class FactoryWithPool<T> : Factory<T>, ICustomFactoryWithPool
         where T : class, IPoolable, new()
     {
         private Dictionary<int, T> mPoolObjs;
@@ -68,10 +81,77 @@ namespace EasyCoroutine
             return result;
         }
 
+        object ICustomFactory.Create() => Create();
+
         public void Restore(T obj)
         {
             obj.OnRestore();
             mFreeKeys.Push(obj.GetHashCode());
+        }
+
+        void ICustomFactoryWithPool.Restore(object obj) => Restore(obj as T);
+    }
+
+    public static class FactoryMgr
+    {
+        private static Dictionary<Type, ICustomFactory> mFactories;
+        private static Dictionary<Type, ICustomFactoryWithPool> mFactoryWithPools;
+
+        static FactoryMgr()
+        {
+            mFactories = new Dictionary<Type, ICustomFactory>();
+            mFactoryWithPools = new Dictionary<Type, ICustomFactoryWithPool>();
+        }
+
+        public static ObjClass Create<ObjClass>()
+            where ObjClass : class, new()
+        {
+            Type type = typeof(ObjClass);
+            var _ = GetFactoryAttr(type);
+            ICustomFactory factory;
+            if (!mFactories.TryGetValue(type, out factory))
+            {
+                factory = new Factory<ObjClass>(() => new ObjClass());
+                mFactories[type] = factory;
+            }
+            return factory.Create() as ObjClass;
+        }
+
+        public static ObjClass PoolCreate<ObjClass>()
+            where ObjClass : class, IPoolable, new()
+        {
+            Type type = typeof(ObjClass);
+            var _ = GetFactoryAttr(type);
+            ICustomFactoryWithPool factory;
+            if (!mFactoryWithPools.TryGetValue(type, out factory))
+            {
+                factory = new FactoryWithPool<ObjClass>(() => new ObjClass());
+                mFactoryWithPools[type] = factory;
+            }
+            return factory.Create() as ObjClass;
+        }
+
+        public static bool Restore<ObjClass>(ObjClass ins)
+            where ObjClass : class, IPoolable, new()
+        {
+            Type type = typeof(ObjClass);
+            var _ = GetFactoryAttr(type);
+            ICustomFactoryWithPool factory;
+            if (mFactoryWithPools.TryGetValue(type, out factory))
+            {
+                factory.Restore(ins);
+                return true;
+            }
+            else
+                return false;
+        }
+
+        private static FactoryableClassAttribute GetFactoryAttr(Type type)
+        {
+            var attr = FactoryableClassAttribute.GetAttrByType(type);
+            if (attr is null)
+                throw new Exception($"{type.Name} missing attribute {typeof(FactoryableClassAttribute).Name}");
+            return attr;
         }
     }
 }

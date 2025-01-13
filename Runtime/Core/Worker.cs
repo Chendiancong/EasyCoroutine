@@ -11,13 +11,12 @@ namespace EasyCoroutine
             Callback = new WorkerCallback();
         }
 
-        public Worker(Action<Action> action)
+        public Worker(Action<Action> action) : this()
         {
-            Callback = new WorkerCallback();
             mWorkerAction.action1 = action;
         }
 
-        public Worker(Action<Action, Action<WorkerException>> action)
+        public Worker(Action<Action, Action<WorkerException>> action) : this()
         {
             Callback = new WorkerCallback();
             mWorkerAction.action2 = action;

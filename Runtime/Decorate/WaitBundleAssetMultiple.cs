@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace EasyCoroutine
 {
+    [FactoryableClass]
     public class WaitBundleAssetMultiple<T> : WorkerDecorator<BundleAssetMultipleResult<T>>, IInstructionCompletable, IPoolable
         where T : UnityEngine.Object
     {
@@ -28,11 +29,7 @@ namespace EasyCoroutine
             else if (instruction is AssetBundleRequest)
                 HandleRequest(instruction as AssetBundleRequest);
             else
-            {
-                worker.Resolve(default);
-                if (mIsPool)
-                    factory.Restore(this);
-            }
+                InternalResolve(default);
         }
 
         public void OnCreate()
@@ -88,6 +85,10 @@ namespace EasyCoroutine
 
         private void HandleCreateRequest(AssetBundleCreateRequest request)
         {
+            if (!request.isDone) {
+                InternalReject(new WorkerException($"Load {mLoader.path} failed"));
+                return;
+            }
             AssetBundle bundle = request.assetBundle;
             mCurBundle = bundle;
             AssetBundleRequest req = bundle.LoadAllAssetsAsync();
@@ -100,12 +101,26 @@ namespace EasyCoroutine
                 mCurBundle?.Unload(false);
             AssetBundle bundle = mCurBundle;
             mCurBundle = null;
-            worker.Resolve(new BundleAssetMultipleResult<T>
+            InternalResolve(new BundleAssetMultipleResult<T>
             {
                 assets = req.allAssets as T[],
                 bundleValid = !mLoader.autoUnloadBundle,
                 assetBundle = bundle
             });
+        }
+
+        private void InternalResolve(BundleAssetMultipleResult<T> result)
+        {
+            worker.Resolve(result);
+            if (mIsPool)
+                factory.Restore(this);
+        }
+
+        private void InternalReject(WorkerException e)
+        {
+            if (mIsPool)
+                factory.Restore(this);
+            worker.Reject(e);
         }
     }
 

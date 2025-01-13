@@ -38,9 +38,7 @@ namespace EasyCoroutine
             where T : UnityEngine.Object
         {
             AssetBundleCreateRequest abr = AssetBundle.LoadFromFileAsync(loader.path);
-            return WaitBundleAsset<T>
-                .factory
-                .Create()
+            return FactoryMgr.Create<WaitBundleAsset<T>>()
                 .SetLoader(loader)
                 .Start(abr, runner);
         }
@@ -53,9 +51,7 @@ namespace EasyCoroutine
             where T : UnityEngine.Object
         {
             AssetBundleCreateRequest abr = AssetBundle.LoadFromFileAsync(loader.path);
-            return WaitBundleAssetMultiple<T>
-                .factory
-                .Create()
+            return FactoryMgr.Create<WaitBundleAssetMultiple<T>>()
                 .SetLoader(loader)
                 .Start(abr, runner);
         }

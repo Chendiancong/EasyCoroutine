@@ -2,7 +2,6 @@ using System;
 
 namespace EasyCoroutine
 {
-    public class WorkerException : Exception { }
 
     public class WorkerCallback : IWorkerCallback
     {

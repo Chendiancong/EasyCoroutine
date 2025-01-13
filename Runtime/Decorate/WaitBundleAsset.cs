@@ -1,13 +1,13 @@
-using System;
 using UnityEngine;
 
 namespace EasyCoroutine
 {
+    [FactoryableClass]
     public class WaitBundleAsset<T> : WorkerDecorator<BundleAssetResult<T>>, IInstructionCompletable, IPoolable
         where T : UnityEngine.Object
     {
-        public readonly static FactoryWithPool<WaitBundleAsset<T>> factory =
-            new FactoryWithPool<WaitBundleAsset<T>>(() => new WaitBundleAsset<T>());
+        // public readonly static FactoryWithPool<WaitBundleAsset<T>> factory =
+        //     new FactoryWithPool<WaitBundleAsset<T>>(() => new WaitBundleAsset<T>());
 
         static WaitBundleAsset() { }
 
@@ -85,9 +85,9 @@ namespace EasyCoroutine
 
         private void HandleCreateRequest(AssetBundleCreateRequest request)
         {
-            if (!request.isDone)
-            {
-                
+            if (!request.isDone) {
+                InternalReject(new WorkerException($"Load {mLoader.path} failed"));
+                return;
             }
             AssetBundle bundle = request.assetBundle;
             mCurBundle = bundle;
@@ -122,14 +122,14 @@ namespace EasyCoroutine
         {
             worker.Resolve(result);
             if (mIsPool)
-                factory.Restore(this);
+                FactoryMgr.Restore(this);
         }
 
         private void InternalReject(WorkerException exception)
         {
-            worker.Reject(exception);
             if (mIsPool)
-                factory.Restore(this);
+                FactoryMgr.Restore(this);
+            worker.Reject(exception);
         }
     }
 
