@@ -2,11 +2,9 @@ using UnityEngine;
 
 namespace EasyCoroutine
 {
+    [FactoryableClass]
     public class WaitInstruction: WorkerDecorator, IInstructionCompletable, ICustomInstructionCompletable, IPoolable
     {
-        public readonly static FactoryWithPool<WaitInstruction> factory =
-            new FactoryWithPool<WaitInstruction>(() => new WaitInstruction());
-
         static WaitInstruction() { }
 
         private bool mIsPool;
@@ -15,14 +13,14 @@ namespace EasyCoroutine
         {
             worker.Resolve();
             if (mIsPool)
-                factory.Restore(this);
+                FactoryMgr.Restore(this);
         }
 
         public void OnComplete(CustomYieldInstruction instruction)
         {
             worker.Resolve();
             if (mIsPool)
-                factory.Restore(this);
+                FactoryMgr.Restore(this);
         }
 
         public void OnCreate()

@@ -11,9 +11,7 @@ namespace EasyCoroutine
 
         public static WaitInstruction Wait(YieldInstruction instruction, IInstructionWaitable runner)
         {
-            return WaitInstruction
-                .factory
-                .Create()
+            return FactoryMgr.Create<WaitInstruction>()
                 .Start(instruction, runner);
         }
 
@@ -24,9 +22,7 @@ namespace EasyCoroutine
 
         public static WaitInstruction Wait(CustomYieldInstruction instruction, IInstructionWaitable runner)
         {
-            return WaitInstruction
-                .factory
-                .Create()
+            return FactoryMgr.Create<WaitInstruction>()
                 .Start(instruction, runner);
         }
 

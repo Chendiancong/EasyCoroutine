@@ -1,13 +1,21 @@
 using System;
 using System.Collections.Generic;
-using PlasticPipe.PlasticProtocol.Messages;
 
 namespace EasyCoroutine
 {
     public interface IPoolable
     {
+        /// <summary>
+        /// 池对象创建时
+        /// </summary>
         void OnCreate();
+        /// <summary>
+        /// 池对象重用时
+        /// </summary>
         void OnReuse();
+        /// <summary>
+        /// 池对象回收时
+        /// </summary>
         void OnRestore();
     }
 

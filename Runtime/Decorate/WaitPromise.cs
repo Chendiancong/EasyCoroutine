@@ -5,45 +5,107 @@ namespace EasyCoroutine
     /// <summary>
     /// 自由控制的异步对象
     /// </summary>
-    public class WaitPromise : WorkerDecorator
+    [FactoryableClass]
+    public class WaitPromise : WorkerDecorator, IPoolable
     {
-        public delegate void Executor(Action resolve, Action<Exception> reject);
+        public delegate void Executor(Action resolve, Action<WorkerException> reject);
+
+        private bool mIsPool = false;
 
         public WaitPromise(Executor executor)
         {
-            executor(OnResolve, OnReject);
+            executor(PromiseResolve, PromiseReject);
         }
 
-        private void OnResolve()
+        public WaitPromise() { }
+
+        public void Resolve() => PromiseResolve();
+
+        public void Reject(string msg) => PromiseReject(new WorkerException(msg));
+
+        public void Reject(WorkerException ex) => PromiseReject(ex);
+
+        public void OnCreate()
         {
+            mIsPool = true;
         }
 
-        private void OnReject(Exception ex)
-        {
+        public void OnReuse() { }
 
+        public void OnRestore()
+        {
+            if (worker.Status == WorkerStatus.Running)
+                worker.Resolve();
+            worker.Reset();
+        }
+
+        private void PromiseResolve()
+        {
+            worker.Resolve();
+            if (mIsPool)
+                FactoryMgr.Restore(this);
+        }
+
+        private void PromiseReject(WorkerException ex)
+        {
+            try { worker.Reject(ex); }
+            catch { throw; }
+            finally
+            {
+                if (mIsPool)
+                    FactoryMgr.Restore(this);
+            }
         }
     }
 
     /// <summary>
     /// 自由控制且具备返回值的的异步对象
     /// </summary>
-    public class WaitPromise<Result> : WorkerDecorator<Result>
+    [FactoryableClass]
+    public class WaitPromise<Result> : WorkerDecorator<Result>, IPoolable
     {
-        public delegate void Executor(Action<Result> resolve, Action<Exception> reject);
+        public delegate void Executor(Action<Result> resolve, Action<WorkerException> reject);
+
+        private bool mIsPool = false;
 
         public WaitPromise(Executor executor)
         {
-            executor(OnResolve, OnReject);
+            executor(PromiseResolve, PromiseReject);
         }
 
-        private void OnResolve(Result result)
-        {
+        public WaitPromise() { }
 
+
+        public void OnCreate()
+        {
+            mIsPool = true;
         }
 
-        private void OnReject(Exception ex)
-        {
+        public void OnReuse() { }
 
+        public void OnRestore()
+        {
+            if (worker.Status == WorkerStatus.Running)
+                worker.Resolve(default);
+            worker.Reset();
+        }
+
+        private void PromiseResolve(Result result)
+        {
+            worker.Resolve(result);
+            if (mIsPool)
+                FactoryMgr.Restore(this);
+        }
+
+        private void PromiseReject(WorkerException ex)
+        {
+            try { worker.Reject(ex); }
+            catch { throw; }
+            finally
+            {
+                if (mIsPool)
+                    FactoryMgr.Restore(this);
+            }
         }
     }
 }

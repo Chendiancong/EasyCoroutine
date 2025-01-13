@@ -127,9 +127,13 @@ namespace EasyCoroutine
 
         private void InternalReject(WorkerException exception)
         {
-            if (mIsPool)
-                FactoryMgr.Restore(this);
-            worker.Reject(exception);
+            try { worker.Reject(exception); }
+            catch { throw; }
+            finally
+            {
+                if (mIsPool)
+                    FactoryMgr.Restore(this);
+            }
         }
     }
 
