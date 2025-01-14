@@ -49,9 +49,7 @@ namespace EasyCoroutine
 
         public void OnRestore()
         {
-            if (worker.Status == WorkerStatus.Running)
-                worker.Resolve(default);
-            worker.Reset();
+            ResetWorker();
         }
 
         public void OnReuse()

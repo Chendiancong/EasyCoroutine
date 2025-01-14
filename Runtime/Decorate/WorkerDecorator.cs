@@ -6,6 +6,7 @@ namespace EasyCoroutine
     {
         protected Worker worker;
         protected Type type;
+        protected bool isPoolObj;
 
         public Worker Worker => worker;
 
@@ -21,6 +22,13 @@ namespace EasyCoroutine
         }
 
         ICustomAwaiter IAwaitable.GetAwaiter() => GetAwaiter();
+
+        protected void ResetWorker()
+        {
+            if (worker.Status == WorkerStatus.Running)
+                worker.Resolve();
+            worker.Reset();
+        }
     }
 
     public abstract class WorkerDecorator<Result> : IAwaitable<Result>
@@ -42,5 +50,12 @@ namespace EasyCoroutine
         }
 
         ICustomAwaiter<Result> IAwaitable<Result>.GetAwaiter() => GetAwaiter();
+
+        protected void ResetWorker()
+        {
+            if (worker.Status == WorkerStatus.Running)
+                worker.Resolve(default);
+            worker.Reset();
+        }
     }
 }

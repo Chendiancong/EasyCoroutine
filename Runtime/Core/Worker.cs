@@ -2,7 +2,7 @@ using System;
 
 namespace EasyCoroutine
 {
-    public class Worker : WorkerBase, IAwaitable, IPoolable
+    public partial class Worker : WorkerBase, IAwaitable
     {
         private WorkerAction mWorkerAction = new WorkerAction();
 
@@ -29,17 +29,18 @@ namespace EasyCoroutine
 
         ICustomAwaiter IAwaitable.GetAwaiter() => GetAwaiter();
 
-        public void OnCreate() { }
-
-        public void OnReuse() { }
-
-        public void OnRestore() { }
-
         public void Resolve() => InternalResolve();
 
         public void Reject(WorkerException e) => InternalReject(e);
 
-        private void InternalResolve()
+        protected void ResetWorker()
+        {
+            if (Status == WorkerStatus.Running)
+                InternalResolve();
+            Reset();
+        }
+
+        protected void InternalResolve()
         {
             try
             {
@@ -58,7 +59,7 @@ namespace EasyCoroutine
             }
         }
 
-        private void InternalReject(WorkerException e)
+        protected void InternalReject(WorkerException e)
         {
             try
             {
@@ -76,7 +77,7 @@ namespace EasyCoroutine
             }
         }
 
-        private void InternalContinue() {
+        protected void InternalContinue() {
             if (continuations != null)
                 continuations();
         }

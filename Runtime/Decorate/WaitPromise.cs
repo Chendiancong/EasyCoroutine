@@ -34,9 +34,7 @@ namespace EasyCoroutine
 
         public void OnRestore()
         {
-            if (worker.Status == WorkerStatus.Running)
-                worker.Resolve();
-            worker.Reset();
+            ResetWorker();
         }
 
         private void PromiseResolve()
@@ -85,9 +83,7 @@ namespace EasyCoroutine
 
         public void OnRestore()
         {
-            if (worker.Status == WorkerStatus.Running)
-                worker.Resolve(default);
-            worker.Reset();
+            ResetWorker();
         }
 
         private void PromiseResolve(Result result)

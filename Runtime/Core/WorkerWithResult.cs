@@ -2,7 +2,7 @@ using System;
 
 namespace EasyCoroutine
 {
-    public class Worker<TResult> : WorkerBase, IAwaitable<TResult>, IPoolable
+    public class Worker<TResult> : WorkerBase, IAwaitable<TResult>
     {
         private TResult mResult;
         private WorkerAction mWorkerAction = new WorkerAction();
@@ -30,12 +30,6 @@ namespace EasyCoroutine
         }
 
         ICustomAwaiter<TResult> IAwaitable<TResult>.GetAwaiter() => GetAwaiter();
-
-        public void OnCreate() { }
-
-        public void OnReuse() { }
-
-        public void OnRestore() { }
 
         public void Resolve(TResult result) => InternalResolve(result);
 
