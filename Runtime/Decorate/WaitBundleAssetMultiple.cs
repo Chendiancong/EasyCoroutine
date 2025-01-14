@@ -16,6 +16,16 @@ namespace EasyCoroutine
         private bool mIsPool;
         private AssetBundle mCurBundle;
 
+        public static WaitBundleAssetMultiple<T> Create(BundleAssetMultipleLoader<T> loader)
+        {
+            AssetBundleCreateRequest abr = AssetBundle.LoadFromFileAsync(loader.path);
+            return FactoryMgr.PoolCreate<WaitBundleAssetMultiple<T>>()
+                .SetLoader(loader)
+                .Start(abr, WorkerRunnerBehaviour.Instance);
+        }
+
+        public WaitBundleAssetMultiple() { }
+
         public WaitBundleAssetMultiple<T> SetLoader(BundleAssetMultipleLoader<T> loader)
         {
             mLoader = loader;
@@ -81,8 +91,6 @@ namespace EasyCoroutine
             Start(req, waitable);
         }
 
-        public WaitBundleAssetMultiple() { }
-
         private void HandleCreateRequest(AssetBundleCreateRequest request)
         {
             if (!request.isDone) {
@@ -144,7 +152,7 @@ namespace EasyCoroutine
         public bool autoUnloadBundle;
 
         public Worker<BundleAssetMultipleResult<Asset>>.WorkerAwaiter GetAwaiter() =>
-            Awaiter.Load(this).GetAwaiter();
+            WaitBundleAssetMultiple<Asset>.Create(this).GetAwaiter();
 
         ICustomAwaiter<BundleAssetMultipleResult<Asset>> IAwaitable<BundleAssetMultipleResult<Asset>>.GetAwaiter() =>
             GetAwaiter();

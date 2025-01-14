@@ -66,7 +66,7 @@ namespace EasyCoroutine
                 if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
                     return;
                 Status = WorkerStatus.Failed;
-                (Callback as WorkerCallback).OnRejected(e);
+                (Callback as WorkerCallback).OnException(e);
             }
             catch { throw; }
             finally

@@ -18,6 +18,26 @@ namespace EasyCoroutine
 
     public interface IWorkerCallback { }
 
+    public interface IWorkerThenable
+    {
+        /// <summary>
+        /// worker完成时调用
+        /// </summary>
+        void Then(Action action);
+        /// <summary>
+        /// worker抛出异常时调用
+        /// </summary>
+        void Catch(Action<WorkerException> action);
+    }
+
+    public interface IWorkerThenable<TResult> : IWorkerThenable
+    {
+        /// <summary>
+        /// worker完成时调用
+        /// </summary>
+        void Then(Action<TResult> action);
+    }
+
     public interface IAwaitable
     {
         ICustomAwaiter GetAwaiter();

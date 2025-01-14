@@ -23,24 +23,24 @@ namespace EasyCoroutine
         ICustomAwaiter IAwaitable.GetAwaiter() => GetAwaiter();
     }
 
-    public abstract class WorkerDecorator<T> : IAwaitable<T>
+    public abstract class WorkerDecorator<Result> : IAwaitable<Result>
     {
-        protected Worker<T> worker;
+        protected Worker<Result> worker;
         protected Type type;
 
-        public Worker<T> Worker => worker;
+        public Worker<Result> Worker => worker;
 
         public WorkerDecorator()
         {
-            worker = new Worker<T>();
+            worker = new Worker<Result>();
             type = GetType();
         }
 
-        public Worker<T>.WorkerAwaiter GetAwaiter()
+        public Worker<Result>.WorkerAwaiter GetAwaiter()
         {
             return worker.GetAwaiter();
         }
 
-        ICustomAwaiter<T> IAwaitable<T>.GetAwaiter() => GetAwaiter();
+        ICustomAwaiter<Result> IAwaitable<Result>.GetAwaiter() => GetAwaiter();
     }
 }

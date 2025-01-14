@@ -50,7 +50,7 @@ namespace EasyCoroutine
                 if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
                     return;
                 Status = WorkerStatus.Succeed;
-                (Callback as WorkerCallback<TResult>).OnFullfilled(result);
+                (Callback as WorkerCallback<TResult>).OnFullfiled(result);
                 if (continuations != null)
                     continuations();
             }
@@ -70,7 +70,7 @@ namespace EasyCoroutine
                 if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
                     return;
                 Status = WorkerStatus.Failed;
-                (Callback as WorkerCallback<TResult>).OnRejected(e);
+                (Callback as WorkerCallback<TResult>).OnException(e);
             }
             catch { throw; }
             finally

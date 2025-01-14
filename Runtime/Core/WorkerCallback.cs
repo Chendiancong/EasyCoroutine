@@ -22,33 +22,20 @@ namespace EasyCoroutine
 
         public void OnFullfilled()
         {
-            try
-            {
-                if (mFullfilled != null)
-                    mFullfilled();
-            } catch (WorkerException e)
-            {
-                OnRejected(e);
-            } catch
-            {
-                throw;
-            } finally
+            try { mFullfilled?.Invoke(); }
+            catch { throw; }
+            finally
             {
                 mFullfilled = null;
                 mRejected = null;
             }
         }
 
-        public void OnRejected(WorkerException e)
+        public void OnException(WorkerException e)
         {
-            try
-            {
-                if (mRejected != null)
-                    mRejected(e);
-            } catch
-            {
-                throw;
-            } finally
+            try { mRejected?.Invoke(e); }
+            catch { throw; }
+            finally
             {
                 mFullfilled = null;
                 mRejected = null;
@@ -58,10 +45,10 @@ namespace EasyCoroutine
 
     public class WorkerCallback<TResult> : IWorkerCallback
     {
-        public Action<TResult> mFullfilled;
-        public Action<WorkerException> mRejected;
+        private Action<TResult> mFullfilled;
+        private Action<WorkerException> mRejected;
 
-        public event Action<TResult> fullfilled
+        public event Action<TResult> Fullfilled
         {
             add => mFullfilled += value;
             remove => mFullfilled -= value;
@@ -73,35 +60,22 @@ namespace EasyCoroutine
             remove => mRejected -= value;
         }
 
-        public void OnFullfilled(TResult result)
+        public void OnFullfiled(TResult result)
         {
-            try
-            {
-                if (mFullfilled != null)
-                    mFullfilled(result);
-            } catch (WorkerException e)
-            {
-                mRejected(e);
-            } catch
-            {
-                throw;
-            } finally
+            try { mFullfilled?.Invoke(result); }
+            catch { throw; }
+            finally
             {
                 mFullfilled = null;
                 mRejected = null;
             }
         }
 
-        public void OnRejected(WorkerException e)
+        public void OnException(WorkerException e)
         {
-            try
-            {
-                if (mRejected != null)
-                    mRejected(e);
-            } catch
-            {
-                throw;
-            } finally
+            try { mRejected?.Invoke(e); }
+            catch { throw; }
+            finally
             {
                 mFullfilled = null;
                 mRejected = null;

@@ -6,15 +6,20 @@ namespace EasyCoroutine
     public class WaitBundleAsset<T> : WorkerDecorator<BundleAssetResult<T>>, IInstructionCompletable, IPoolable
         where T : UnityEngine.Object
     {
-        // public readonly static FactoryWithPool<WaitBundleAsset<T>> factory =
-        //     new FactoryWithPool<WaitBundleAsset<T>>(() => new WaitBundleAsset<T>());
-
-        static WaitBundleAsset() { }
-
         private IInstructionWaitable mWaitable;
         private BundleAssetLoader<T> mLoader;
         private bool mIsPool;
         private AssetBundle mCurBundle;
+
+        public static WaitBundleAsset<T> Create(BundleAssetLoader<T> loader)
+        {
+            AssetBundleCreateRequest abr = AssetBundle.LoadFromFileAsync(loader.path);
+            return FactoryMgr.PoolCreate<WaitBundleAsset<T>>()
+                .SetLoader(loader)
+                .Start(abr, WorkerRunnerBehaviour.Instance);
+        }
+
+        public WaitBundleAsset() { }
 
         public WaitBundleAsset<T> SetLoader(BundleAssetLoader<T> loader)
         {
@@ -80,8 +85,6 @@ namespace EasyCoroutine
         {
             Start(req, waitable);
         }
-
-        public WaitBundleAsset() : base() { }
 
         private void HandleCreateRequest(AssetBundleCreateRequest request)
         {
@@ -157,7 +160,7 @@ namespace EasyCoroutine
         public bool autoUnloadBundle;
 
         public Worker<BundleAssetResult<Asset>>.WorkerAwaiter GetAwaiter() =>
-            Awaiter.Load(this).GetAwaiter();
+            WaitBundleAsset<Asset>.Create(this).GetAwaiter();
 
         ICustomAwaiter<BundleAssetResult<Asset>> IAwaitable<BundleAssetResult<Asset>>.GetAwaiter() =>
             GetAwaiter();
