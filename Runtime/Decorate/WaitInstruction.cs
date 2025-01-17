@@ -3,10 +3,8 @@ using UnityEngine;
 namespace EasyCoroutine
 {
     [FactoryableClass]
-    public class WaitInstruction: WorkerDecorator, IInstructionCompletable, ICustomInstructionCompletable, IPoolable
+    public class WaitInstruction: WorkerDecorator, IInstructionCompletable, ICustomInstructionCompletable
     {
-        private bool mIsPool;
-
         public static WaitInstruction Create(YieldInstruction instruction)
         {
             return FactoryMgr.PoolCreate<WaitInstruction>()
@@ -22,30 +20,13 @@ namespace EasyCoroutine
         public void OnComplete(YieldInstruction instruction)
         {
             worker.Resolve();
-            if (mIsPool)
-                FactoryMgr.Restore(this);
+            DisposeMe(this);
         }
 
         public void OnComplete(CustomYieldInstruction instruction)
         {
             worker.Resolve();
-            if (mIsPool)
-                FactoryMgr.Restore(this);
-        }
-
-        public void OnCreate()
-        {
-            mIsPool = true;
-        }
-
-        public void OnRestore()
-        {
-            ResetWorker();
-        }
-
-        public void OnReuse()
-        {
-
+            DisposeMe(this);
         }
 
         public WaitInstruction Start(YieldInstruction instruction, IInstructionWaitable runner)

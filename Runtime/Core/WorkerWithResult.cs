@@ -35,6 +35,13 @@ namespace EasyCoroutine
 
         public void Reject(WorkerException e) => InternalReject(e);
 
+        protected void ResetWorker()
+        {
+            if (Status == WorkerStatus.Running)
+                InternalResolve(default);
+            Reset();
+        }
+
         private void InternalResolve(TResult result)
         {
             mResult = result;

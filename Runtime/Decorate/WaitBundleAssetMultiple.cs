@@ -3,7 +3,7 @@ using UnityEngine;
 namespace EasyCoroutine
 {
     [FactoryableClass]
-    public class WaitBundleAssetMultiple<T> : WorkerDecorator<BundleAssetMultipleResult<T>>, IInstructionCompletable, IPoolable
+    public class WaitBundleAssetMultiple<T> : WorkerDecorator<BundleAssetMultipleResult<T>>, IInstructionCompletable
         where T : UnityEngine.Object
     {
         public readonly static FactoryWithPool<WaitBundleAssetMultiple<T>> factory =
@@ -13,7 +13,6 @@ namespace EasyCoroutine
 
         private IInstructionWaitable mWaitable;
         private BundleAssetMultipleLoader<T> mLoader;
-        private bool mIsPool;
         private AssetBundle mCurBundle;
 
         public static WaitBundleAssetMultiple<T> Create(BundleAssetMultipleLoader<T> loader)
@@ -40,21 +39,6 @@ namespace EasyCoroutine
                 HandleRequest(instruction as AssetBundleRequest);
             else
                 InternalResolve(default);
-        }
-
-        public void OnCreate()
-        {
-            mIsPool = true;
-        }
-
-        public void OnRestore()
-        {
-            ResetWorker();
-        }
-
-        public void OnReuse()
-        {
-
         }
 
         public WaitBundleAssetMultiple<T> Start(AssetBundleCreateRequest createReq, IInstructionWaitable waitable)
@@ -118,19 +102,14 @@ namespace EasyCoroutine
         private void InternalResolve(BundleAssetMultipleResult<T> result)
         {
             worker.Resolve(result);
-            if (mIsPool)
-                factory.Restore(this);
+            DisposeMe(this);
         }
 
         private void InternalReject(WorkerException e)
         {
             try { worker.Reject(e); }
             catch { throw; }
-            finally
-            {
-                if (mIsPool)
-                    FactoryMgr.Restore(this);
-            }
+            finally { DisposeMe(this); }
         }
     }
 

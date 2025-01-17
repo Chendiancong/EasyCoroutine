@@ -3,12 +3,11 @@ using UnityEngine;
 namespace EasyCoroutine
 {
     [FactoryableClass]
-    public class WaitBundleAsset<T> : WorkerDecorator<BundleAssetResult<T>>, IInstructionCompletable, IPoolable
+    public class WaitBundleAsset<T> : WorkerDecorator<BundleAssetResult<T>>, IInstructionCompletable
         where T : UnityEngine.Object
     {
         private IInstructionWaitable mWaitable;
         private BundleAssetLoader<T> mLoader;
-        private bool mIsPool;
         private AssetBundle mCurBundle;
 
         public static WaitBundleAsset<T> Create(BundleAssetLoader<T> loader)
@@ -35,20 +34,6 @@ namespace EasyCoroutine
                 HandleRequest(instruction as AssetBundleRequest);
             else
                 InternalResolve(default);
-        }
-
-        public void OnCreate()
-        {
-            mIsPool = true;
-        }
-
-        public void OnRestore()
-        {
-            ResetWorker();
-        }
-
-        public void OnReuse()
-        {
         }
 
         public WaitBundleAsset<T> Start(AssetBundleCreateRequest createReq, IInstructionWaitable waitable)
@@ -122,19 +107,14 @@ namespace EasyCoroutine
         private void InternalResolve(BundleAssetResult<T> result)
         {
             worker.Resolve(result);
-            if (mIsPool)
-                FactoryMgr.Restore(this);
+            DisposeMe(this);
         }
 
         private void InternalReject(WorkerException exception)
         {
             try { worker.Reject(exception); }
             catch { throw; }
-            finally
-            {
-                if (mIsPool)
-                    FactoryMgr.Restore(this);
-            }
+            finally { DisposeMe(this); }
         }
     }
 

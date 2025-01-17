@@ -33,14 +33,16 @@ namespace EasyCoroutine
 
         public void Reject(WorkerException e) => InternalReject(e);
 
-        protected void ResetWorker()
+        public void Reject(string msg) => InternalReject(new WorkerException(msg));
+
+        public override void Reset()
         {
             if (Status == WorkerStatus.Running)
                 InternalResolve();
-            Reset();
+            base.Reset();
         }
 
-        protected void InternalResolve()
+        private void InternalResolve()
         {
             try
             {
@@ -59,7 +61,7 @@ namespace EasyCoroutine
             }
         }
 
-        protected void InternalReject(WorkerException e)
+        private void InternalReject(WorkerException e)
         {
             try
             {
@@ -77,7 +79,7 @@ namespace EasyCoroutine
             }
         }
 
-        protected void InternalContinue() {
+        private void InternalContinue() {
             if (continuations != null)
                 continuations();
         }
