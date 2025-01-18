@@ -6,41 +6,21 @@ namespace EasyCoroutine
     /// 自由控制的异步对象
     /// </summary>
     [FactoryableClass]
-    public class WaitPromise : Worker, IPoolable
+    public class WaitPromise : WorkerDecorator
     {
-        private bool mIsPool = false;
+        public void Resolve() => worker.Resolve();
 
-        public void OnCreate()
-        {
-            mIsPool = true;
-        }
-
-        public void OnReuse() { }
-
-        public void OnRestore()
-        {
-            Reset();
-        }
+        public void Reject(WorkerException exception) => worker.Reject(exception);
     }
 
     /// <summary>
     /// 自由控制且具备返回值的的异步对象
     /// </summary>
     [FactoryableClass]
-    public class WaitPromise<Result> : Worker<Result>, IPoolable
+    public class WaitPromise<Result> : WorkerDecorator<Result>
     {
-        private bool mIsPool = false;
+        public void Resolve(Result result) => worker.Resolve(result);
 
-        public void OnCreate()
-        {
-            mIsPool = true;
-        }
-
-        public void OnReuse() { }
-
-        public void OnRestore()
-        {
-            ResetWorker();
-        }
+        public void Reject(WorkerException exception) => worker.Reject(exception);
     }
 }

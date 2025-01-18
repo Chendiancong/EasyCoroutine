@@ -2,24 +2,26 @@ using System;
 
 namespace EasyCoroutine
 {
-    public partial class Worker : WorkerBase, IAwaitable
+    public class Worker : WorkerBase, IAwaitable
     {
-        private WorkerAction mWorkerAction = new WorkerAction();
+        public delegate void SimpleExecutor(Action resolver);
+        public delegate void Executor(Action resolver, Action<WorkerException> rejector);
+
+        private WorkerExecution m_execution = new WorkerExecution();
 
         public Worker()
         {
             Callback = new WorkerCallback();
         }
 
-        public Worker(Action<Action> action) : this()
+        public Worker(SimpleExecutor executor) : this()
         {
-            mWorkerAction.action1 = action;
+            m_execution.executor1 = executor;
         }
 
-        public Worker(Action<Action, Action<WorkerException>> action) : this()
+        public Worker(Executor executor) : this()
         {
-            Callback = new WorkerCallback();
-            mWorkerAction.action2 = action;
+            m_execution.executor2 = executor;
         }
 
         public WorkerAwaiter GetAwaiter()
@@ -50,8 +52,8 @@ namespace EasyCoroutine
                 if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
                     return;
                 Status = WorkerStatus.Succeed;
-                (Callback as WorkerCallback).OnFullfilled();
                 InternalContinue();
+                (Callback as WorkerCallback).OnFullfilled();
             }
             catch { throw; }
             finally
@@ -94,11 +96,11 @@ namespace EasyCoroutine
                 {
                     mWorker.Start();
 
-                    ref WorkerAction wAction = ref mWorker.mWorkerAction;
-                    if (wAction.action1 != null)
-                        wAction.action1(mWorker.InternalResolve);
-                    else if (wAction.action2 != null)
-                        wAction.action2(mWorker.InternalResolve, mWorker.InternalReject);
+                    ref WorkerExecution wAction = ref mWorker.m_execution;
+                    if (wAction.executor1 != null)
+                        wAction.executor1(mWorker.InternalResolve);
+                    else if (wAction.executor2 != null)
+                        wAction.executor2(mWorker.InternalResolve, mWorker.InternalReject);
                     wAction.Clear();
 
                     WorkerStatus status = mWorker.Status;
@@ -123,14 +125,14 @@ namespace EasyCoroutine
             }
         }
 
-        private struct WorkerAction
+        private struct WorkerExecution
         {
-            public Action<Action> action1;
-            public Action<Action, Action<WorkerException>> action2;
+            public SimpleExecutor executor1;
+            public Executor executor2;
             public void Clear()
             {
-                action1 = null;
-                action2 = null;
+                executor1 = null;
+                executor2 = null;
             }
         }
     }

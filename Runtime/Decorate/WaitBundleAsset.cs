@@ -6,9 +6,9 @@ namespace EasyCoroutine
     public class WaitBundleAsset<T> : WorkerDecorator<BundleAssetResult<T>>, IInstructionCompletable
         where T : UnityEngine.Object
     {
-        private IInstructionWaitable mWaitable;
-        private BundleAssetLoader<T> mLoader;
-        private AssetBundle mCurBundle;
+        private IInstructionWaitable m_waitable;
+        private BundleAssetLoader<T> m_loader;
+        private AssetBundle m_curBundle;
 
         public static WaitBundleAsset<T> Create(BundleAssetLoader<T> loader)
         {
@@ -22,7 +22,7 @@ namespace EasyCoroutine
 
         public WaitBundleAsset<T> SetLoader(BundleAssetLoader<T> loader)
         {
-            mLoader = loader;
+            m_loader = loader;
             return this;
         }
 
@@ -41,7 +41,7 @@ namespace EasyCoroutine
             if (worker.Status == WorkerStatus.Waiting)
             {
                 worker.Start();
-                mWaitable = waitable;
+                m_waitable = waitable;
                 waitable.WaitFor(createReq, this);
             }
             return this;
@@ -52,7 +52,7 @@ namespace EasyCoroutine
             if (worker.Status == WorkerStatus.Waiting)
             {
                 worker.Start();
-                mWaitable = waitable;
+                m_waitable = waitable;
                 waitable.WaitFor(req, this);
             }
             return this;
@@ -72,34 +72,34 @@ namespace EasyCoroutine
         private void HandleCreateRequest(AssetBundleCreateRequest request)
         {
             if (!request.isDone) {
-                InternalReject(new WorkerException($"Load {mLoader.path} failed"));
+                InternalReject(new WorkerException($"Load {m_loader.path} failed"));
                 return;
             }
             AssetBundle bundle = request.assetBundle;
-            mCurBundle = bundle;
+            m_curBundle = bundle;
             AssetBundleRequest req;
-            if (string.IsNullOrEmpty(mLoader.assetName))
+            if (string.IsNullOrEmpty(m_loader.assetName))
                 req = bundle.LoadAllAssetsAsync();
             else
-                req = bundle.LoadAssetAsync(mLoader.assetName);
-            mWaitable.WaitFor(req, this);
+                req = bundle.LoadAssetAsync(m_loader.assetName);
+            m_waitable.WaitFor(req, this);
         }
 
         private void HandleRequest(AssetBundleRequest request)
         {
             T targetAsset;
-            if (string.IsNullOrEmpty(mLoader.assetName))
+            if (string.IsNullOrEmpty(m_loader.assetName))
                 targetAsset = request.allAssets.Length > 0 ? request.allAssets[0] as T : null;
             else
                 targetAsset = request.asset as T;
-            if (mLoader.autoUnloadBundle)
-                mCurBundle?.Unload(false);
-            AssetBundle bundle = mCurBundle;
-            mCurBundle = null;
+            if (m_loader.autoUnloadBundle)
+                m_curBundle?.Unload(false);
+            AssetBundle bundle = m_curBundle;
+            m_curBundle = null;
 
             InternalResolve(new BundleAssetResult<T> {
                 asset = targetAsset,
-                bundleValid = !mLoader.autoUnloadBundle,
+                bundleValid = !m_loader.autoUnloadBundle,
                 assetBundle = bundle
             });
         }

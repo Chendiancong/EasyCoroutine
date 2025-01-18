@@ -23,19 +23,27 @@ namespace EasyCoroutine
         /// <summary>
         /// worker完成时调用
         /// </summary>
-        void Then(Action action);
+        IWorkerThenable Then(Action onFullfilled);
+        /// <summary>
+        /// worker完成时调用
+        /// </summary>
+        IWorkerThenable<NextResult> Then<NextResult>(Func<NextResult> onFullfilled);
         /// <summary>
         /// worker抛出异常时调用
         /// </summary>
-        void Catch(Action<WorkerException> action);
+        IWorkerThenable Catch(Action<WorkerException> catcher);
     }
 
-    public interface IWorkerThenable<TResult> : IWorkerThenable
+    public interface IWorkerThenable<Result> : IWorkerThenable
     {
         /// <summary>
         /// worker完成时调用
         /// </summary>
-        void Then(Action<TResult> action);
+        IWorkerThenable Then(Action<Result> onFullfilled);
+        /// <summary>
+        /// worker完成时调用
+        /// </summary>
+        IWorkerThenable<NextResult> Then<NextResult>(Func<Result, NextResult> onFullfilled);
     }
 
     public interface IAwaitable
@@ -62,5 +70,15 @@ namespace EasyCoroutine
     {
         void WaitFor<T>(T instruction, IInstructionCompletable completable) where T : YieldInstruction;
         void WaitFor<T>(T instruction, ICustomInstructionCompletable completable) where T : CustomYieldInstruction;
+    }
+
+    public interface IInvokable
+    {
+        void Invoke();
+    }
+
+    public interface Invokable<Arg>
+    {
+        void Invoke(Arg arg);
     }
 }

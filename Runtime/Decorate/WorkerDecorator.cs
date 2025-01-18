@@ -2,7 +2,7 @@ using System;
 
 namespace EasyCoroutine
 {
-    public class WorkerDecorator : IAwaitable, IPoolable
+    public class WorkerDecorator : IAwaitable, IPoolable, IWorkerThenable
     {
         protected Worker worker;
         protected Type type;
@@ -26,6 +26,22 @@ namespace EasyCoroutine
         public void ResetWorker()
         {
             worker.Reset();
+        }
+
+        public IWorkerThenable Then(Action action)
+        {
+            WaitPromise promise = FactoryMgr.PoolCreate<WaitPromise>();
+            return promise;
+        }
+
+        public IWorkerThenable<NextResult> Then<NextResult>(Func<NextResult> func)
+        {
+            return null;
+        }
+
+        public IWorkerThenable Catch(Action<WorkerException> action)
+        {
+            return null;
         }
 
         protected void DisposeMe<T>(T ins)

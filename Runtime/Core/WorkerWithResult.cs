@@ -4,8 +4,8 @@ namespace EasyCoroutine
 {
     public class Worker<TResult> : WorkerBase, IAwaitable<TResult>
     {
-        private TResult mResult;
-        private WorkerAction mWorkerAction = new WorkerAction();
+        private TResult m_result;
+        private WorkerAction m_workerAction = new WorkerAction();
 
         public Worker()
         {
@@ -15,13 +15,13 @@ namespace EasyCoroutine
         public Worker(Action<Action<TResult>> action)
         {
             Callback = new WorkerCallback<TResult>();
-            mWorkerAction.action1 = action;
+            m_workerAction.action1 = action;
         }
 
         public Worker(Action<Action<TResult>, Action<WorkerException>> action)
         {
             Callback = new WorkerCallback<TResult>();
-            mWorkerAction.action2 = action;
+            m_workerAction.action2 = action;
         }
 
         public WorkerAwaiter GetAwaiter()
@@ -44,7 +44,7 @@ namespace EasyCoroutine
 
         private void InternalResolve(TResult result)
         {
-            mResult = result;
+            m_result = result;
             try
             {
                 WorkerStatus status = Status;
@@ -91,7 +91,7 @@ namespace EasyCoroutine
                 {
                     mWorker.Start();
 
-                    ref WorkerAction wAction = ref mWorker.mWorkerAction;
+                    ref WorkerAction wAction = ref mWorker.m_workerAction;
                     if (wAction.action1 != null)
                         wAction.action1(mWorker.Resolve);
                     else if (wAction.action2 != null)
@@ -111,7 +111,7 @@ namespace EasyCoroutine
 
             public TResult GetResult()
             {
-                return mWorker.mResult;
+                return mWorker.m_result;
             }
 
             public void OnCompleted(Action continuation)

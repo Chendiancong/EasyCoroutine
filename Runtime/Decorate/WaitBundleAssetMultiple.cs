@@ -6,14 +6,11 @@ namespace EasyCoroutine
     public class WaitBundleAssetMultiple<T> : WorkerDecorator<BundleAssetMultipleResult<T>>, IInstructionCompletable
         where T : UnityEngine.Object
     {
-        public readonly static FactoryWithPool<WaitBundleAssetMultiple<T>> factory =
-            new FactoryWithPool<WaitBundleAssetMultiple<T>>(() => new WaitBundleAssetMultiple<T>());
-
         static WaitBundleAssetMultiple() { }
 
-        private IInstructionWaitable mWaitable;
-        private BundleAssetMultipleLoader<T> mLoader;
-        private AssetBundle mCurBundle;
+        private IInstructionWaitable m_waitable;
+        private BundleAssetMultipleLoader<T> m_loader;
+        private AssetBundle m_curBundle;
 
         public static WaitBundleAssetMultiple<T> Create(BundleAssetMultipleLoader<T> loader)
         {
@@ -27,7 +24,7 @@ namespace EasyCoroutine
 
         public WaitBundleAssetMultiple<T> SetLoader(BundleAssetMultipleLoader<T> loader)
         {
-            mLoader = loader;
+            m_loader = loader;
             return this;
         }
 
@@ -46,7 +43,7 @@ namespace EasyCoroutine
             if (worker.Status == WorkerStatus.Waiting)
             {
                 worker.Start();
-                mWaitable = waitable;
+                m_waitable = waitable;
                 waitable.WaitFor(createReq, this);
             }
             return this;
@@ -57,7 +54,7 @@ namespace EasyCoroutine
             if (worker.Status == WorkerStatus.Waiting)
             {
                 worker.Start();
-                mWaitable = waitable;
+                m_waitable = waitable;
                 waitable.WaitFor(req, this);
             }
             return this;
@@ -76,25 +73,25 @@ namespace EasyCoroutine
         private void HandleCreateRequest(AssetBundleCreateRequest request)
         {
             if (!request.isDone) {
-                InternalReject(new WorkerException($"Load {mLoader.path} failed"));
+                InternalReject(new WorkerException($"Load {m_loader.path} failed"));
                 return;
             }
             AssetBundle bundle = request.assetBundle;
-            mCurBundle = bundle;
+            m_curBundle = bundle;
             AssetBundleRequest req = bundle.LoadAllAssetsAsync();
-            mWaitable.WaitFor(req, this);
+            m_waitable.WaitFor(req, this);
         }
 
         private void HandleRequest(AssetBundleRequest req)
         {
-            if (mLoader.autoUnloadBundle)
-                mCurBundle?.Unload(false);
-            AssetBundle bundle = mCurBundle;
-            mCurBundle = null;
+            if (m_loader.autoUnloadBundle)
+                m_curBundle?.Unload(false);
+            AssetBundle bundle = m_curBundle;
+            m_curBundle = null;
             InternalResolve(new BundleAssetMultipleResult<T>
             {
                 assets = req.allAssets as T[],
-                bundleValid = !mLoader.autoUnloadBundle,
+                bundleValid = !m_loader.autoUnloadBundle,
                 assetBundle = bundle
             });
         }
