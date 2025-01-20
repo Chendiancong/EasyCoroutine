@@ -1,13 +1,17 @@
 using System;
+using System.Collections.Generic;
 
 namespace EasyCoroutine
 {
-    public class Worker : WorkerBase, IAwaitable
+    public class Worker : WorkerBase, IAwaitable, IWorkerLike
     {
         public delegate void SimpleExecutor(Action resolver);
-        public delegate void Executor(Action resolver, Action<WorkerException> rejector);
+        public delegate void Executor(Action resolver, Action<Exception> rejector);
 
+        public WorkerCallback Callback { get; private set; }
         private WorkerExecution m_execution = new WorkerExecution();
+        private List<IInvokable> m_nextJobs = new List<IInvokable>();
+        private List<IInvokable<Exception>> m_rejectJobs = new List<IInvokable<Exception>>();
 
         public Worker()
         {
@@ -33,9 +37,16 @@ namespace EasyCoroutine
 
         public void Resolve() => InternalResolve();
 
-        public void Reject(WorkerException e) => InternalReject(e);
+        public void Reject(Exception e) => InternalReject(e);
 
-        public void Reject(string msg) => InternalReject(new WorkerException(msg));
+        public void Reject(string reason)
+            =>InternalReject(new WorkerException(reason));
+
+        public void AddNextJob(IInvokable invokable)
+            => m_nextJobs.Add(invokable);
+
+        public void AddRejectJob(IInvokable<Exception> invokable)
+            => m_rejectJobs.Add(invokable);
 
         public override void Reset()
         {
@@ -44,7 +55,7 @@ namespace EasyCoroutine
             base.Reset();
         }
 
-        private void InternalResolve()
+        protected void InternalResolve()
         {
             try
             {
@@ -52,18 +63,23 @@ namespace EasyCoroutine
                 if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
                     return;
                 Status = WorkerStatus.Succeed;
+                Callback.OnFullfilled();
                 InternalContinue();
-                (Callback as WorkerCallback).OnFullfilled();
+                for (int i = 0, len = m_nextJobs.Count; i < len; ++i)
+                    m_nextJobs[i].Invoke();
             }
             catch { throw; }
             finally
             {
                 if (continuations != null)
                     continuations = null;
+                m_nextJobs.Clear();
             }
         }
 
-        private void InternalReject(WorkerException e)
+        protected void InternalReject(string reason) => InternalReject(new WorkerException(reason));
+
+        protected void InternalReject(Exception e)
         {
             try
             {
@@ -71,13 +87,16 @@ namespace EasyCoroutine
                 if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
                     return;
                 Status = WorkerStatus.Failed;
-                (Callback as WorkerCallback).OnException(e);
+                Callback.OnException(WorkerException.FromException(e));
+                for (int i = 0, len = m_rejectJobs.Count; i < len; ++i)
+                    m_rejectJobs[i].Invoke(e);
             }
             catch { throw; }
             finally
             {
                 if (continuations != null)
                     continuations = null;
+                m_rejectJobs.Clear();
             }
         }
 

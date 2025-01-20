@@ -16,34 +16,32 @@ namespace EasyCoroutine
         T GetResult();
     }
 
-    public interface IWorkerCallback { }
-
-    public interface IWorkerThenable
+    public interface IThenable
     {
-        /// <summary>
-        /// worker完成时调用
-        /// </summary>
-        IWorkerThenable Then(Action onFullfilled);
-        /// <summary>
-        /// worker完成时调用
-        /// </summary>
-        IWorkerThenable<NextResult> Then<NextResult>(Func<NextResult> onFullfilled);
-        /// <summary>
-        /// worker抛出异常时调用
-        /// </summary>
-        IWorkerThenable Catch(Action<WorkerException> catcher);
+        IThenable Then(Action onFullfilled);
+        IThenable<NextResult> Then<NextResult>(Func<NextResult> onFullfilled);
+        IThenable Catch(Action<Exception> onReject);
+        IThenable<NextResult> Catch<NextResult>(Func<Exception, NextResult> onReject);
     }
 
-    public interface IWorkerThenable<Result> : IWorkerThenable
+    public interface IThenable<Result> : IThenable
     {
-        /// <summary>
-        /// worker完成时调用
-        /// </summary>
-        IWorkerThenable Then(Action<Result> onFullfilled);
-        /// <summary>
-        /// worker完成时调用
-        /// </summary>
-        IWorkerThenable<NextResult> Then<NextResult>(Func<Result, NextResult> onFullfilled);
+        IThenable Then(Action<Result> onFullfilled);
+        IThenable<NextResult> Then<NextResult>(Func<Result, NextResult> onFullfilled);
+    }
+
+    public interface IWorkerLike
+    {
+        void Resolve();
+        void Reject(Exception e);
+        void Reject(string reason);
+    }
+
+    public interface IWorkerLike<Result>
+    {
+        void Resolve(Result result);
+        void Reject(Exception e);
+        void Reject(string reason);
     }
 
     public interface IAwaitable
@@ -77,8 +75,8 @@ namespace EasyCoroutine
         void Invoke();
     }
 
-    public interface Invokable<Arg>
+    public interface IInvokable<Input>
     {
-        void Invoke(Arg arg);
+        void Invoke(Input input);
     }
 }

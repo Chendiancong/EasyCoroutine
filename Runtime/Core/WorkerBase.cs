@@ -10,7 +10,6 @@ namespace EasyCoroutine
         protected int id = ++workerId;
 
         public WorkerStatus Status { get; protected set; } = WorkerStatus.Waiting;
-        public IWorkerCallback Callback { get; protected set; }
 
         public virtual void Start()
         {

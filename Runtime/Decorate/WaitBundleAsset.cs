@@ -33,7 +33,7 @@ namespace EasyCoroutine
             else if (instruction is AssetBundleRequest)
                 HandleRequest(instruction as AssetBundleRequest);
             else
-                InternalResolve(default);
+                ResolveMe(this, default);
         }
 
         public WaitBundleAsset<T> Start(AssetBundleCreateRequest createReq, IInstructionWaitable waitable)
@@ -72,7 +72,7 @@ namespace EasyCoroutine
         private void HandleCreateRequest(AssetBundleCreateRequest request)
         {
             if (!request.isDone) {
-                InternalReject(new WorkerException($"Load {m_loader.path} failed"));
+                RejectMe(this, new WorkerException($"Load {m_loader.path} failed"));
                 return;
             }
             AssetBundle bundle = request.assetBundle;
@@ -97,24 +97,15 @@ namespace EasyCoroutine
             AssetBundle bundle = m_curBundle;
             m_curBundle = null;
 
-            InternalResolve(new BundleAssetResult<T> {
-                asset = targetAsset,
-                bundleValid = !m_loader.autoUnloadBundle,
-                assetBundle = bundle
-            });
-        }
-
-        private void InternalResolve(BundleAssetResult<T> result)
-        {
-            worker.Resolve(result);
-            DisposeMe(this);
-        }
-
-        private void InternalReject(WorkerException exception)
-        {
-            try { worker.Reject(exception); }
-            catch { throw; }
-            finally { DisposeMe(this); }
+            ResolveMe(
+                this,
+                new BundleAssetResult<T>
+                {
+                    asset = targetAsset,
+                    bundleValid = !m_loader.autoUnloadBundle,
+                    assetBundle = bundle
+                }
+            );
         }
     }
 

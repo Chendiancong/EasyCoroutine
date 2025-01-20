@@ -3,7 +3,7 @@ using System;
 namespace EasyCoroutine
 {
 
-    public class WorkerCallback : IWorkerCallback
+    public class WorkerCallback
     {
         private Action m_fullfilled;
         private Action<WorkerException> m_rejected;
@@ -43,7 +43,7 @@ namespace EasyCoroutine
         }
     }
 
-    public class WorkerCallback<TResult> : IWorkerCallback
+    public class WorkerCallback<TResult>
     {
         private Action<TResult> mFullfilled;
         private Action<WorkerException> mRejected;
