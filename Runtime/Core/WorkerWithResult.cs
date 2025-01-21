@@ -46,45 +46,63 @@ namespace EasyCoroutine
         public void AddRejectJob(IInvokable<Exception> invokable)
             => m_rejectJobs.Add(invokable);
 
-#region IWorkerLike implementations
+        #region IWorkerLike implementations
         void IWorkerLike<Result>.Resolve(Result result) => InternalResolve(result);
 
         void IWorkerLike<Result>.Reject(Exception e) => InternalReject(e);
 
         void IWorkerLike<Result>.Reject(string reason) => InternalReject(new Exception(reason));
-#endregion
+        #endregion
 
-#region IThenable implementations
+        #region IThenable implementations
         public IThenable Then(Action<Result> onFullfilled)
         {
-            throw new NotImplementedException();
+            var defer = new WorkerDefer();
+            var next = new WorkerNextWithInput<Result>(defer, onFullfilled);
+            m_nextJobs.Add(next);
+            return defer.Worker;
         }
 
         public IThenable<NextResult> Then<NextResult>(Func<Result, NextResult> onFullfilled)
         {
-            throw new NotImplementedException();
+            var defer = new WorkerDefer<NextResult>();
+            var next = new WorkerNextWithInputOutput<Result, NextResult>(defer, onFullfilled);
+            m_nextJobs.Add(next);
+            return defer.Worker;
         }
 
         public IThenable Then(Action onFullfilled)
         {
-            throw new NotImplementedException();
+            var defer = new WorkerDefer();
+            var next = new WorkerNextWithInput<Result>(defer, _ => onFullfilled());
+            m_nextJobs.Add(next);
+            return defer.Worker;
         }
 
         public IThenable<NextResult> Then<NextResult>(Func<NextResult> onFullfilled)
         {
-            throw new NotImplementedException();
+            var defer = new WorkerDefer<NextResult>();
+            var next = new WorkerNextWithInputOutput<Result, NextResult>(defer, _ => onFullfilled());
+            m_nextJobs.Add(next);
+            return defer.Worker;
         }
 
         public IThenable Catch(Action<Exception> onReject)
         {
-            throw new NotImplementedException();
+            var defer = new WorkerDefer();
+            var reject = new WorkerRejecter(defer, onReject);
+            m_rejectJobs.Add(reject);
+            return defer.Worker;
         }
 
         public IThenable<NextResult> Catch<NextResult>(Func<Exception, NextResult> onReject)
         {
-            throw new NotImplementedException();
+            var defer = new WorkerDefer<NextResult>();
+            var reject = new WorkerRejecter<NextResult>(defer, onReject);
+            m_rejectJobs.Add(reject);
+            return defer.Worker;
         }
-#endregion
+        #endregion
 
         protected void ResetWorker()
         {

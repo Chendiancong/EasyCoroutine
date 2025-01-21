@@ -9,7 +9,6 @@ namespace EasyCoroutine
         public delegate void Executor(Action resolver, Action<Exception> rejector);
 
         public WorkerCallback Callback { get; private set; }
-        private WorkerExecution m_execution = new WorkerExecution();
         private List<IInvokable> m_nextJobs = new List<IInvokable>();
         private List<IInvokable<Exception>> m_rejectJobs = new List<IInvokable<Exception>>();
 
@@ -20,12 +19,12 @@ namespace EasyCoroutine
 
         public Worker(SimpleExecutor executor) : this()
         {
-            m_execution.executor1 = executor;
+            executor(InternalResolve);
         }
 
         public Worker(Executor executor) : this()
         {
-            m_execution.executor2 = executor;
+            executor(InternalResolve, InternalReject);
         }
 
         public WorkerAwaiter GetAwaiter()
@@ -41,37 +40,49 @@ namespace EasyCoroutine
         public void AddRejectJob(IInvokable<Exception> invokable)
             => m_rejectJobs.Add(invokable);
 
-#region IWorkerLike implementaions
+        #region IWorkerLike implementaions
         void IWorkerLike.Resolve() => InternalResolve();
 
         void IWorkerLike.Reject(Exception e) => InternalReject(e);
 
         void IWorkerLike.Reject(string reason)
             =>InternalReject(new WorkerException(reason));
-#endregion
+        #endregion
 
-#region IThenable implementations
+        #region IThenable implementations
         public IThenable Then(Action onFullfilled)
         {
-            throw new NotImplementedException();
+            WorkerDefer defer = new WorkerDefer();
+            WorkerNext next = new WorkerNext(defer, onFullfilled);
+            m_nextJobs.Add(next);
+            return defer.Worker;
         }
 
         public IThenable<NextResult> Then<NextResult>(Func<NextResult> onFullfilled)
         {
-            throw new NotImplementedException();
+            var defer = new WorkerDefer<NextResult>();
+            var next = new WorkerNextWithOutput<NextResult>(defer, onFullfilled);
+            m_nextJobs.Add(next);
+            return defer.Worker;
         }
 
         public IThenable Catch(Action<Exception> onReject)
         {
-            throw new NotImplementedException();
+            var defer = new WorkerDefer();
+            var reject = new WorkerRejecter(defer, onReject);
+            m_rejectJobs.Add(reject);
+            return defer.Worker;
         }
 
         public IThenable<NextResult> Catch<NextResult>(Func<Exception, NextResult> onReject)
         {
-            throw new NotImplementedException();
+            var defer = new WorkerDefer<NextResult>();
+            var reject = new WorkerRejecter<NextResult>(defer, onReject);
+            m_rejectJobs.Add(reject);
+            return defer.Worker;
         }
 
-#endregion
+        #endregion
 
         public override void Reset()
         {
@@ -140,13 +151,6 @@ namespace EasyCoroutine
                 {
                     mWorker.Start();
 
-                    ref WorkerExecution wAction = ref mWorker.m_execution;
-                    if (wAction.executor1 != null)
-                        wAction.executor1(mWorker.InternalResolve);
-                    else if (wAction.executor2 != null)
-                        wAction.executor2(mWorker.InternalResolve, mWorker.InternalReject);
-                    wAction.Clear();
-
                     WorkerStatus status = mWorker.Status;
                     return status == WorkerStatus.Succeed ||
                         status == WorkerStatus.Failed;
@@ -166,17 +170,6 @@ namespace EasyCoroutine
             public void GetResult()
             {
 
-            }
-        }
-
-        private struct WorkerExecution
-        {
-            public SimpleExecutor executor1;
-            public Executor executor2;
-            public void Clear()
-            {
-                executor1 = null;
-                executor2 = null;
             }
         }
     }

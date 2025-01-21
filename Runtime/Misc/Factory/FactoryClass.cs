@@ -10,21 +10,21 @@ namespace EasyCoroutine
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class FactoryableClassAttribute : Attribute
     {
-        private static Dictionary<string, FactoryableClassAttribute> mType2Attrs;
+        private static Dictionary<string, FactoryableClassAttribute> m_type2Attrs;
 
         static FactoryableClassAttribute()
         {
-            mType2Attrs = new Dictionary<string, FactoryableClassAttribute>();
+            m_type2Attrs = new Dictionary<string, FactoryableClassAttribute>();
         }
 
         public static FactoryableClassAttribute GetAttrByType(Type type)
         {
             FactoryableClassAttribute attr;
-            if (!mType2Attrs.TryGetValue(type.Name, out attr))
+            if (!m_type2Attrs.TryGetValue(type.Name, out attr))
             {
                 attr = type.GetCustomAttribute<FactoryableClassAttribute>();
                 if (attr is not null)
-                    mType2Attrs[type.Name] = attr;
+                    m_type2Attrs[type.Name] = attr;
             }
             return attr;
         }
