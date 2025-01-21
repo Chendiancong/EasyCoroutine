@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.IO;
 using System.Threading.Tasks;
+using System;
 
 namespace EasyCoroutine
 {
@@ -32,9 +33,17 @@ namespace EasyCoroutine
                 assetName = "Sphere",
                 autoUnloadBundle = true
             };
-            var result = await loader;
-            Debug.Log($"loaded {result.asset.name}");
-            Instantiate(result.asset);
+            try {
+                var result = await loader;
+                Debug.Log($"loaded {result.asset.name}");
+                Instantiate(result.asset);
+            }
+            catch (Exception e)
+            {
+                Debug.Log("Exception");
+                Debug.Log(e);
+                throw;
+            }
         }
     }
 }

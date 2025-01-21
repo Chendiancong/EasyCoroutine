@@ -3,7 +3,7 @@ using UnityEngine;
 namespace EasyCoroutine
 {
     [FactoryableClass]
-    public class WaitBundleAssetMultiple<T> : WorkerDecorator<BundleAssetMultipleResult<T>>, IInstructionCompletable
+    public class WaitBundleAssetMultiple<T> : PooledWorker<BundleAssetMultipleResult<T>>, IInstructionCompletable
         where T : UnityEngine.Object
     {
         static WaitBundleAssetMultiple() { }
@@ -40,9 +40,9 @@ namespace EasyCoroutine
 
         public WaitBundleAssetMultiple<T> Start(AssetBundleCreateRequest createReq, IInstructionWaitable waitable)
         {
-            if (worker.Status == WorkerStatus.Waiting)
+            if (Status == WorkerStatus.Waiting)
             {
-                worker.Start();
+                Start();
                 m_waitable = waitable;
                 waitable.WaitFor(createReq, this);
             }
@@ -51,9 +51,9 @@ namespace EasyCoroutine
 
         public WaitBundleAssetMultiple<T> Start(AssetBundleRequest req, IInstructionWaitable waitable)
         {
-            if (worker.Status == WorkerStatus.Waiting)
+            if (Status == WorkerStatus.Waiting)
             {
-                worker.Start();
+                Start();
                 m_waitable = waitable;
                 waitable.WaitFor(req, this);
             }

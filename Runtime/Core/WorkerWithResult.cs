@@ -1,33 +1,34 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace EasyCoroutine
 {
-    public class Worker<TResult> : WorkerBase, IAwaitable<TResult>, IWorkerLike<TResult>
+    public class Worker<Result> : WorkerBase, IAwaitable<Result>, IWorkerLike<Result>, IThenable<Result>
     {
-        public delegate void SimpleExecutor(Action<TResult> resolver);
-        public delegate void Executor(Action<TResult> resolver, Action<Exception> rejecter);
+        public delegate void SimpleExecutor(Action<Result> resolver);
+        public delegate void Executor(Action<Result> resolver, Action<Exception> rejecter);
 
-        public WorkerCallback<TResult> Callback { get; private set; }
-        private TResult m_result;
+        public WorkerCallback<Result> Callback { get; private set; }
+        private Result m_result;
         private WorkerExecution m_execution = new WorkerExecution();
-        private List<IInvokable<TResult>> m_nextJobs = new List<IInvokable<TResult>>();
+        private List<IInvokable<Result>> m_nextJobs = new List<IInvokable<Result>>();
         private List<IInvokable<Exception>> m_rejectJobs = new List<IInvokable<Exception>>();
 
         public Worker()
         {
-            Callback = new WorkerCallback<TResult>();
+            Callback = new WorkerCallback<Result>();
         }
 
         public Worker(SimpleExecutor executor)
         {
-            Callback = new WorkerCallback<TResult>();
+            Callback = new WorkerCallback<Result>();
             m_execution.executor1 = executor;
         }
 
         public Worker(Executor executor)
         {
-            Callback = new WorkerCallback<TResult>();
+            Callback = new WorkerCallback<Result>();
             m_execution.executor2 = executor;
         }
 
@@ -36,19 +37,54 @@ namespace EasyCoroutine
             return new WorkerAwaiter(this);
         }
 
-        ICustomAwaiter<TResult> IAwaitable<TResult>.GetAwaiter() => GetAwaiter();
+        ICustomAwaiter<Result> IAwaitable<Result>.GetAwaiter() => GetAwaiter();
 
-        public void Resolve(TResult result) => InternalResolve(result);
 
-        public void Reject(Exception e) => InternalReject(e);
-
-        public void Reject(string reason) => InternalReject(new Exception(reason));
-
-        public void AddNextJob(IInvokable<TResult> invokable)
+        public void AddNextJob(IInvokable<Result> invokable)
             => m_nextJobs.Add(invokable);
         
         public void AddRejectJob(IInvokable<Exception> invokable)
             => m_rejectJobs.Add(invokable);
+
+#region IWorkerLike implementations
+        void IWorkerLike<Result>.Resolve(Result result) => InternalResolve(result);
+
+        void IWorkerLike<Result>.Reject(Exception e) => InternalReject(e);
+
+        void IWorkerLike<Result>.Reject(string reason) => InternalReject(new Exception(reason));
+#endregion
+
+#region IThenable implementations
+        public IThenable Then(Action<Result> onFullfilled)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IThenable<NextResult> Then<NextResult>(Func<Result, NextResult> onFullfilled)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IThenable Then(Action onFullfilled)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IThenable<NextResult> Then<NextResult>(Func<NextResult> onFullfilled)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IThenable Catch(Action<Exception> onReject)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IThenable<NextResult> Catch<NextResult>(Func<Exception, NextResult> onReject)
+        {
+            throw new NotImplementedException();
+        }
+#endregion
 
         protected void ResetWorker()
         {
@@ -57,7 +93,7 @@ namespace EasyCoroutine
             Reset();
         }
 
-        private void InternalResolve(TResult result)
+        protected void InternalResolve(Result result)
         {
             m_result = result;
             try
@@ -81,7 +117,7 @@ namespace EasyCoroutine
             }
         }
 
-        private void InternalReject(Exception e)
+        protected void InternalReject(Exception e)
         {
             try
             {
@@ -102,9 +138,9 @@ namespace EasyCoroutine
             }
         }
 
-        public struct WorkerAwaiter : ICustomAwaiter<TResult>
+        public struct WorkerAwaiter : ICustomAwaiter<Result>
         {
-            private Worker<TResult> mWorker;
+            private Worker<Result> mWorker;
 
             public bool IsCompleted
             {
@@ -114,9 +150,9 @@ namespace EasyCoroutine
 
                     ref WorkerExecution wAction = ref mWorker.m_execution;
                     if (wAction.executor1 != null)
-                        wAction.executor1(mWorker.Resolve);
+                        wAction.executor1(mWorker.InternalResolve);
                     else if (wAction.executor2 != null)
-                        wAction.executor2(mWorker.Resolve, mWorker.Reject);
+                        wAction.executor2(mWorker.InternalResolve, mWorker.InternalReject);
                     wAction.Clear();
 
                     WorkerStatus status = mWorker.Status;
@@ -125,12 +161,12 @@ namespace EasyCoroutine
                 }
             }
 
-            public WorkerAwaiter(Worker<TResult> worker)
+            public WorkerAwaiter(Worker<Result> worker)
             {
                 mWorker = worker;
             }
 
-            public TResult GetResult()
+            public Result GetResult()
             {
                 return mWorker.m_result;
             }
@@ -152,5 +188,59 @@ namespace EasyCoroutine
                 executor2 = null;
             }
         }
+    }
+
+    public class PooledWorker<Result> : Worker<Result>, IPoolable
+    {
+        protected bool isPoolObj = false;
+
+        #region IPoolable implementation
+        void IPoolable.OnCreate() => OnPoolCreate();
+
+        void IPoolable.OnReuse() => OnPoolReuse();
+
+        void IPoolable.OnRestore() => OnPoolRestore();
+        #endregion
+
+        protected virtual void OnPoolCreate()
+        {
+            isPoolObj = true;
+        }
+
+        protected virtual void OnPoolReuse() {}
+
+        protected virtual void OnPoolRestore()
+        {
+            if (Status == WorkerStatus.Running)
+                InternalResolve(default);
+            Reset();
+        }
+
+        protected static void DisposeMe<Instance>(Instance ins)
+            where Instance : PooledWorker<Instance>, new()
+        {
+            if (ins.isPoolObj)
+                FactoryMgr.Restore(ins);
+        }
+
+        protected static void ResolveMe<Instance>(Instance ins, Result result)
+            where Instance : PooledWorker<Result>, new()
+        {
+            ins.InternalResolve(result);
+            if (ins.isPoolObj)
+                FactoryMgr.Restore(ins);
+        }
+
+        protected static void RejectMe<Instance>(Instance ins, Exception exception)
+            where Instance : PooledWorker<Result>, new()
+        {
+            ins.InternalReject(exception);
+            if (ins.isPoolObj)
+                FactoryMgr.Restore(ins);
+        }
+
+        protected static void RejectMe<Instance>(Instance ins, string reason)
+            where Instance : PooledWorker<Result>, new()
+            => RejectMe(ins, new Exception(reason));
     }
 }

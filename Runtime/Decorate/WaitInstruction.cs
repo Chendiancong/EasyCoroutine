@@ -3,7 +3,7 @@ using UnityEngine;
 namespace EasyCoroutine
 {
     [FactoryableClass]
-    public class WaitInstruction: WorkerDecorator, IInstructionCompletable, ICustomInstructionCompletable
+    public class WaitInstruction: PooledWorker, IInstructionCompletable, ICustomInstructionCompletable
     {
         public static WaitInstruction Create(YieldInstruction instruction)
         {
@@ -19,21 +19,19 @@ namespace EasyCoroutine
 
         public void OnComplete(YieldInstruction instruction)
         {
-            worker.Resolve();
-            DisposeMe(this);
+            ResolveMe(this);
         }
 
         public void OnComplete(CustomYieldInstruction instruction)
         {
-            worker.Resolve();
-            DisposeMe(this);
+            ResolveMe(this);
         }
 
         public WaitInstruction Start(YieldInstruction instruction, IInstructionWaitable runner)
         {
-            if (worker.Status == WorkerStatus.Waiting)
+            if (Status == WorkerStatus.Waiting)
             {
-                worker.Start();
+                Start();
                 runner.WaitFor(instruction, this);
             }
             return this;
@@ -41,9 +39,9 @@ namespace EasyCoroutine
 
         public WaitInstruction Start(CustomYieldInstruction instruction, IInstructionWaitable runner)
         {
-            if (worker.Status == WorkerStatus.Waiting)
+            if (Status == WorkerStatus.Waiting)
             {
-                worker.Start();
+                Start();
                 runner.WaitFor(instruction, this);
             }
             return this;

@@ -6,24 +6,24 @@ namespace EasyCoroutine
     /// 自由控制的异步对象
     /// </summary>
     [FactoryableClass]
-    public class WaitPromise : WorkerDecorator, IWorkerLike
+    public class WaitPromise : Worker, IWorkerLike
     {
-        public void Resolve() => worker.Resolve();
+        public void Resolve() => InternalResolve();
 
-        public void Reject(Exception exception) => worker.Reject(exception);
+        public void Reject(Exception exception) => InternalReject(exception);
 
-        public void Reject(string reason) => Reject(new Exception(reason));
+        public void Reject(string reason) => InternalReject(new Exception(reason));
     }
 
     /// <summary>
     /// 自由控制且具备返回值的的异步对象
     /// </summary>
     [FactoryableClass]
-    public class WaitPromise<Result> : WorkerDecorator<Result>, IWorkerLike<Result>
+    public class WaitPromise<Result> : Worker<Result>, IWorkerLike<Result>
     {
-        public void Resolve(Result result) => worker.Resolve(result);
+        public void Resolve(Result result) => InternalResolve(result);
 
-        public void Reject(Exception exception) => worker.Reject(exception);
+        public void Reject(Exception exception) => InternalReject(exception);
 
         public void Reject(string reason) => Reject(new Exception(reason));
     }

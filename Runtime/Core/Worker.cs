@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace EasyCoroutine
 {
-    public class Worker : WorkerBase, IAwaitable, IWorkerLike
+    public class Worker : WorkerBase, IAwaitable, IWorkerLike, IThenable
     {
         public delegate void SimpleExecutor(Action resolver);
         public delegate void Executor(Action resolver, Action<Exception> rejector);
@@ -35,18 +35,43 @@ namespace EasyCoroutine
 
         ICustomAwaiter IAwaitable.GetAwaiter() => GetAwaiter();
 
-        public void Resolve() => InternalResolve();
-
-        public void Reject(Exception e) => InternalReject(e);
-
-        public void Reject(string reason)
-            =>InternalReject(new WorkerException(reason));
-
         public void AddNextJob(IInvokable invokable)
             => m_nextJobs.Add(invokable);
 
         public void AddRejectJob(IInvokable<Exception> invokable)
             => m_rejectJobs.Add(invokable);
+
+#region IWorkerLike implementaions
+        void IWorkerLike.Resolve() => InternalResolve();
+
+        void IWorkerLike.Reject(Exception e) => InternalReject(e);
+
+        void IWorkerLike.Reject(string reason)
+            =>InternalReject(new WorkerException(reason));
+#endregion
+
+#region IThenable implementations
+        public IThenable Then(Action onFullfilled)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IThenable<NextResult> Then<NextResult>(Func<NextResult> onFullfilled)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IThenable Catch(Action<Exception> onReject)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IThenable<NextResult> Catch<NextResult>(Func<Exception, NextResult> onReject)
+        {
+            throw new NotImplementedException();
+        }
+
+#endregion
 
         public override void Reset()
         {
@@ -154,5 +179,59 @@ namespace EasyCoroutine
                 executor2 = null;
             }
         }
+    }
+
+    public class PooledWorker : Worker, IPoolable
+    {
+        #region IPoolable implementations
+        protected bool isPoolObj = false;
+        void IPoolable.OnCreate() => OnPoolCreate();
+
+        void IPoolable.OnRestore() => OnPoolRestore();
+
+        void IPoolable.OnReuse() => OnPoolReuse();
+
+        #endregion
+
+        protected virtual void OnPoolCreate()
+        {
+            isPoolObj = true;
+        }
+
+        protected virtual void OnPoolReuse() { }
+
+        protected virtual void OnPoolRestore()
+        {
+            if (Status == WorkerStatus.Running)
+                InternalResolve();
+            Reset();
+        }
+
+        protected static void DisposeMe<Instance>(Instance ins)
+            where Instance : PooledWorker, new()
+        {
+            if (ins.isPoolObj)
+                FactoryMgr.Restore(ins);
+        }
+
+        protected static void ResolveMe<Instance>(Instance ins)
+            where Instance : PooledWorker, new()
+        {
+            ins.InternalResolve();
+            if (ins.isPoolObj)
+                FactoryMgr.Restore(ins);
+        }
+
+        protected static void RejectMe<Instance>(Instance ins, Exception e)
+            where Instance : PooledWorker, new()
+        {
+            ins.InternalReject(e);
+            if (ins.isPoolObj)
+                FactoryMgr.Restore(ins);
+        }
+
+        protected static void RejectMe<Instance>(Instance ins, string reason)
+            where Instance : PooledWorker, new()
+            => RejectMe(ins, new Exception(reason));
     }
 }
