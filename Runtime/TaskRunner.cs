@@ -15,8 +15,27 @@ namespace EasyCoroutine
 
         public void Doit()
         {
-            RunTask()
-                .ContinueWith(_ => Debug.Log("RunTask ok!"));
+            // RunTask().ContinueWith(_ => Debug.Log("RunTask ok!"));
+            WaitInstruction.Create(new WaitForSeconds(1f))
+                .Then(() => {
+                    Debug.Log("Wait 1s");
+                    return WaitInstruction.Create(new WaitForSeconds(2f));
+                })
+                .Then(obj => {
+                    Debug.Log("wait 2s");
+                    Debug.Log(obj);
+                    var loader = new BundleAssetLoader<GameObject>
+                    {
+                        path = $"{Application.streamingAssetsPath}{Path.DirectorySeparatorChar}sphere.prefab.asset",
+                        assetName = "Sphere",
+                        autoUnloadBundle = true
+                    };
+                    return WaitBundleAsset<GameObject>.Create(loader);
+                })
+                .Then(obj => {
+                    Debug.Log("task ok");
+                    Debug.Log(obj);
+                });
         }
 
         public async Task RunTask()

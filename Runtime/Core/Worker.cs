@@ -8,14 +8,10 @@ namespace EasyCoroutine
         public delegate void SimpleExecutor(Action resolver);
         public delegate void Executor(Action resolver, Action<Exception> rejector);
 
-        public WorkerCallback Callback { get; private set; }
-        private List<IInvokable> m_nextJobs = new List<IInvokable>();
-        private List<IInvokable<Exception>> m_rejectJobs = new List<IInvokable<Exception>>();
+        private List<IInvokable> m_fullfilled = new List<IInvokable>();
+        private List<IInvokable<Exception>> m_rejected = new List<IInvokable<Exception>>();
 
-        public Worker()
-        {
-            Callback = new WorkerCallback();
-        }
+        public Worker() { }
 
         public Worker(SimpleExecutor executor) : this()
         {
@@ -34,12 +30,6 @@ namespace EasyCoroutine
 
         ICustomAwaiter IAwaitable.GetAwaiter() => GetAwaiter();
 
-        public void AddNextJob(IInvokable invokable)
-            => m_nextJobs.Add(invokable);
-
-        public void AddRejectJob(IInvokable<Exception> invokable)
-            => m_rejectJobs.Add(invokable);
-
         #region IWorkerLike implementaions
         void IWorkerLike.Resolve() => InternalResolve();
 
@@ -47,6 +37,19 @@ namespace EasyCoroutine
 
         void IWorkerLike.Reject(string reason)
             =>InternalReject(new WorkerException(reason));
+
+        void IWorkerLike.OnFullfilled(Action onFullfilled)
+        {
+            WorkerNext next = new WorkerNext(null, onFullfilled);
+            m_fullfilled.Add(next);
+        }
+
+        void IWorkerLike.OnRejected(Action<Exception> onRejected)
+        {
+            WorkerRejecter rejecter = new WorkerRejecter(null, onRejected);
+            m_rejected.Add(rejecter);
+        }
+
         #endregion
 
         #region IThenable implementations
@@ -54,7 +57,7 @@ namespace EasyCoroutine
         {
             WorkerDefer defer = new WorkerDefer();
             WorkerNext next = new WorkerNext(defer, onFullfilled);
-            m_nextJobs.Add(next);
+            m_fullfilled.Add(next);
             return defer.Worker;
         }
 
@@ -62,7 +65,7 @@ namespace EasyCoroutine
         {
             var defer = new WorkerDefer<NextResult>();
             var next = new WorkerNextWithOutput<NextResult>(defer, onFullfilled);
-            m_nextJobs.Add(next);
+            m_fullfilled.Add(next);
             return defer.Worker;
         }
 
@@ -70,7 +73,7 @@ namespace EasyCoroutine
         {
             var defer = new WorkerDefer();
             var reject = new WorkerRejecter(defer, onReject);
-            m_rejectJobs.Add(reject);
+            m_rejected.Add(reject);
             return defer.Worker;
         }
 
@@ -78,7 +81,7 @@ namespace EasyCoroutine
         {
             var defer = new WorkerDefer<NextResult>();
             var reject = new WorkerRejecter<NextResult>(defer, onReject);
-            m_rejectJobs.Add(reject);
+            m_rejected.Add(reject);
             return defer.Worker;
         }
 
@@ -99,17 +102,16 @@ namespace EasyCoroutine
                 if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
                     return;
                 Status = WorkerStatus.Succeed;
-                Callback.OnFullfilled();
                 InternalContinue();
-                for (int i = 0, len = m_nextJobs.Count; i < len; ++i)
-                    m_nextJobs[i].Invoke();
+                for (int i = 0, len = m_fullfilled.Count; i < len; ++i)
+                    m_fullfilled[i].Invoke();
             }
             catch { throw; }
             finally
             {
                 if (continuations != null)
                     continuations = null;
-                m_nextJobs.Clear();
+                m_fullfilled.Clear();
             }
         }
 
@@ -123,16 +125,15 @@ namespace EasyCoroutine
                 if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
                     return;
                 Status = WorkerStatus.Failed;
-                Callback.OnException(WorkerException.FromException(e));
-                for (int i = 0, len = m_rejectJobs.Count; i < len; ++i)
-                    m_rejectJobs[i].Invoke(e);
+                for (int i = 0, len = m_rejected.Count; i < len; ++i)
+                    m_rejected[i].Invoke(e);
             }
             catch { throw; }
             finally
             {
                 if (continuations != null)
                     continuations = null;
-                m_rejectJobs.Clear();
+                m_rejected.Clear();
             }
         }
 

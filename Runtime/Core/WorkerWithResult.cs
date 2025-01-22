@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace EasyCoroutine
 {
@@ -8,12 +7,12 @@ namespace EasyCoroutine
     {
         public delegate void SimpleExecutor(Action<Result> resolver);
         public delegate void Executor(Action<Result> resolver, Action<Exception> rejecter);
+        public delegate void FullExecutor(Action<Result> resolver, Action<IWorkerLike<Result>> chainResolver, Action<Exception> rejecter);
 
         public WorkerCallback<Result> Callback { get; private set; }
         private Result m_result;
-        private WorkerExecution m_execution = new WorkerExecution();
-        private List<IInvokable<Result>> m_nextJobs = new List<IInvokable<Result>>();
-        private List<IInvokable<Exception>> m_rejectJobs = new List<IInvokable<Exception>>();
+        private List<IInvokable<Result>> m_fullfilled = new List<IInvokable<Result>>();
+        private List<IInvokable<Exception>> m_rejected = new List<IInvokable<Exception>>();
 
         public Worker()
         {
@@ -23,13 +22,19 @@ namespace EasyCoroutine
         public Worker(SimpleExecutor executor)
         {
             Callback = new WorkerCallback<Result>();
-            m_execution.executor1 = executor;
+            executor(InternalResolve);
         }
 
         public Worker(Executor executor)
         {
             Callback = new WorkerCallback<Result>();
-            m_execution.executor2 = executor;
+            executor(InternalResolve, InternalReject);
+        }
+
+        public Worker(FullExecutor executor)
+        {
+            Callback = new WorkerCallback<Result>();
+            executor(InternalResolve, InternalResolve, InternalReject);
         }
 
         public WorkerAwaiter GetAwaiter()
@@ -39,19 +44,26 @@ namespace EasyCoroutine
 
         ICustomAwaiter<Result> IAwaitable<Result>.GetAwaiter() => GetAwaiter();
 
-
-        public void AddNextJob(IInvokable<Result> invokable)
-            => m_nextJobs.Add(invokable);
-        
-        public void AddRejectJob(IInvokable<Exception> invokable)
-            => m_rejectJobs.Add(invokable);
-
         #region IWorkerLike implementations
+        void IWorkerLike<Result>.Resolve(IWorkerLike<Result> result) => InternalResolve(result);
+        
         void IWorkerLike<Result>.Resolve(Result result) => InternalResolve(result);
 
         void IWorkerLike<Result>.Reject(Exception e) => InternalReject(e);
 
         void IWorkerLike<Result>.Reject(string reason) => InternalReject(new Exception(reason));
+
+        void IWorkerLike<Result>.OnFullfilled(Action<Result> onFullfilled)
+        {
+            WorkerNextWithInput<Result> next = new WorkerNextWithInput<Result>(null, onFullfilled);
+            m_fullfilled.Add(next);
+        }
+
+        void IWorkerLike<Result>.OnRejected(Action<Exception> onRejected)
+        {
+            WorkerRejecter rejecter = new WorkerRejecter(null, onRejected);
+            m_rejected.Add(rejecter);
+        }
         #endregion
 
         #region IThenable implementations
@@ -59,7 +71,7 @@ namespace EasyCoroutine
         {
             var defer = new WorkerDefer();
             var next = new WorkerNextWithInput<Result>(defer, onFullfilled);
-            m_nextJobs.Add(next);
+            m_fullfilled.Add(next);
             return defer.Worker;
         }
 
@@ -67,7 +79,7 @@ namespace EasyCoroutine
         {
             var defer = new WorkerDefer<NextResult>();
             var next = new WorkerNextWithInputOutput<Result, NextResult>(defer, onFullfilled);
-            m_nextJobs.Add(next);
+            m_fullfilled.Add(next);
             return defer.Worker;
         }
 
@@ -75,7 +87,7 @@ namespace EasyCoroutine
         {
             var defer = new WorkerDefer();
             var next = new WorkerNextWithInput<Result>(defer, _ => onFullfilled());
-            m_nextJobs.Add(next);
+            m_fullfilled.Add(next);
             return defer.Worker;
         }
 
@@ -83,7 +95,7 @@ namespace EasyCoroutine
         {
             var defer = new WorkerDefer<NextResult>();
             var next = new WorkerNextWithInputOutput<Result, NextResult>(defer, _ => onFullfilled());
-            m_nextJobs.Add(next);
+            m_fullfilled.Add(next);
             return defer.Worker;
         }
 
@@ -91,7 +103,7 @@ namespace EasyCoroutine
         {
             var defer = new WorkerDefer();
             var reject = new WorkerRejecter(defer, onReject);
-            m_rejectJobs.Add(reject);
+            m_rejected.Add(reject);
             return defer.Worker;
         }
 
@@ -99,7 +111,7 @@ namespace EasyCoroutine
         {
             var defer = new WorkerDefer<NextResult>();
             var reject = new WorkerRejecter<NextResult>(defer, onReject);
-            m_rejectJobs.Add(reject);
+            m_rejected.Add(reject);
             return defer.Worker;
         }
         #endregion
@@ -107,7 +119,7 @@ namespace EasyCoroutine
         protected void ResetWorker()
         {
             if (Status == WorkerStatus.Running)
-                InternalResolve(default);
+                InternalResolve((Result)default);
             Reset();
         }
 
@@ -123,16 +135,21 @@ namespace EasyCoroutine
                 Callback.OnFullfiled(result);
                 if (continuations != null)
                     continuations();
-                for (int i = 0, len = m_nextJobs.Count; i < len; ++i)
-                    m_nextJobs[i].Invoke(result);
+                for (int i = 0, len = m_fullfilled.Count; i < len; ++i)
+                    m_fullfilled[i].Invoke(result);
             }
             catch { throw; }
             finally
             {
                 if (continuations != null)
                     continuations = null;
-                m_nextJobs.Clear();
+                m_fullfilled.Clear();
             }
+        }
+
+        protected void InternalResolve(IWorkerLike<Result> prevWorker)
+        {
+            prevWorker.OnFullfilled(ret => InternalResolve(ret));
         }
 
         protected void InternalReject(Exception e)
@@ -144,15 +161,15 @@ namespace EasyCoroutine
                     return;
                 Status = WorkerStatus.Failed;
                 Callback.OnException(WorkerException.FromException(e));
-                for (int i = 0, len = m_rejectJobs.Count; i < len; ++i)
-                    m_rejectJobs[i].Invoke(e);
+                for (int i = 0, len = m_rejected.Count; i < len; ++i)
+                    m_rejected[i].Invoke(e);
             }
             catch { throw; }
             finally
             {
                 if (continuations != null)
                     continuations = null;
-                m_rejectJobs.Clear();
+                m_rejected.Clear();
             }
         }
 
@@ -165,13 +182,6 @@ namespace EasyCoroutine
                 get
                 {
                     mWorker.Start();
-
-                    ref WorkerExecution wAction = ref mWorker.m_execution;
-                    if (wAction.executor1 != null)
-                        wAction.executor1(mWorker.InternalResolve);
-                    else if (wAction.executor2 != null)
-                        wAction.executor2(mWorker.InternalResolve, mWorker.InternalReject);
-                    wAction.Clear();
 
                     WorkerStatus status = mWorker.Status;
                     return status == WorkerStatus.Succeed ||
@@ -192,18 +202,6 @@ namespace EasyCoroutine
             public void OnCompleted(Action continuation)
             {
                 mWorker.continuations += continuation;
-            }
-        }
-
-        private struct WorkerExecution
-        {
-            public SimpleExecutor executor1;
-            public Executor executor2;
-
-            public void Clear()
-            {
-                executor1 = null;
-                executor2 = null;
             }
         }
     }
@@ -230,7 +228,7 @@ namespace EasyCoroutine
         protected virtual void OnPoolRestore()
         {
             if (Status == WorkerStatus.Running)
-                InternalResolve(default);
+                InternalResolve((Result)default);
             Reset();
         }
 

@@ -16,6 +16,16 @@ namespace EasyCoroutine
         T GetResult();
     }
 
+    public interface IAwaitable
+    {
+        ICustomAwaiter GetAwaiter();
+    }
+
+    public interface IAwaitable<TResult>
+    {
+        ICustomAwaiter<TResult> GetAwaiter();
+    }
+
     public interface IThenable
     {
         IThenable Then(Action onFullfilled);
@@ -35,23 +45,18 @@ namespace EasyCoroutine
         void Resolve();
         void Reject(Exception e);
         void Reject(string reason);
+        void OnFullfilled(Action onFullfilled);
+        void OnRejected(Action<Exception> onRejected);
     }
 
     public interface IWorkerLike<Result>
     {
+        void Resolve(IWorkerLike<Result> result);
         void Resolve(Result result);
         void Reject(Exception e);
         void Reject(string reason);
-    }
-
-    public interface IAwaitable
-    {
-        ICustomAwaiter GetAwaiter();
-    }
-
-    public interface IAwaitable<TResult>
-    {
-        ICustomAwaiter<TResult> GetAwaiter();
+        void OnFullfilled(Action<Result> onFullfilled);
+        void OnRejected(Action<Exception> onRejected);
     }
 
     public interface IInstructionCompletable
