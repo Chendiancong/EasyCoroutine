@@ -55,34 +55,34 @@ namespace EasyCoroutine
         #region IThenable implementations
         public IThenable Then(Action onFullfilled)
         {
-            WorkerDefer defer = new WorkerDefer();
+            WorkerDefer defer = WorkerDefer.Create();
             WorkerNext next = new WorkerNext(defer, onFullfilled);
             m_fullfilled.Add(next);
-            return defer.Worker;
+            return defer.Worker as Worker;
         }
 
         public IThenable<NextResult> Then<NextResult>(Func<NextResult> onFullfilled)
         {
-            var defer = new WorkerDefer<NextResult>();
+            var defer = WorkerDefer<NextResult>.Create();
             var next = new WorkerNextWithOutput<NextResult>(defer, onFullfilled);
             m_fullfilled.Add(next);
-            return defer.Worker;
+            return defer.Worker as Worker<NextResult>;
         }
 
         public IThenable Catch(Action<Exception> onReject)
         {
-            var defer = new WorkerDefer();
+            var defer = WorkerDefer.Create();
             var reject = new WorkerRejecter(defer, onReject);
             m_rejected.Add(reject);
-            return defer.Worker;
+            return defer.Worker as Worker;
         }
 
         public IThenable<NextResult> Catch<NextResult>(Func<Exception, NextResult> onReject)
         {
-            var defer = new WorkerDefer<NextResult>();
+            var defer = WorkerDefer<NextResult>.Create();
             var reject = new WorkerRejecter<NextResult>(defer, onReject);
             m_rejected.Add(reject);
-            return defer.Worker;
+            return defer.Worker as Worker<NextResult>;
         }
 
         #endregion

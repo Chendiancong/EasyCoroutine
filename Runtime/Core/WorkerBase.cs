@@ -11,6 +11,8 @@ namespace EasyCoroutine
 
         public WorkerStatus Status { get; protected set; } = WorkerStatus.Waiting;
 
+        public bool IsResolved => Status == WorkerStatus.Succeed;
+
         public virtual void Start()
         {
             if (Status == WorkerStatus.Waiting)

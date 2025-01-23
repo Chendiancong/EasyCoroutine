@@ -1,19 +1,22 @@
 using System;
+using UnityEngine;
 
 namespace EasyCoroutine
 {
-    public class WorkerDefer : IWorkerLike
+    public struct WorkerDefer : IWorkerLike
     {
         public Action Resolver { get; private set; }
         public Action<Exception> Rejecter { get; private set; }
-        public Worker Worker { get; private set; }
+        public IWorkerLike Worker { get; private set; }
 
-        public WorkerDefer()
+        public static WorkerDefer Create()
         {
-            Worker = new Worker((resolver, rejecter) => {
-                Resolver = resolver;
-                Rejecter = rejecter;
+            var defer = new WorkerDefer();
+            defer.Worker = new Worker((resolver, rejecter) => {
+                defer.Resolver = resolver;
+                defer.Rejecter = rejecter;
             });
+            return defer;
         }
 
         public void Resolve()
@@ -30,39 +33,36 @@ namespace EasyCoroutine
 
         public void OnFullfilled(Action onFullfilled)
         {
-            (Worker as IWorkerLike).OnFullfilled(onFullfilled);
+            Worker.OnFullfilled(onFullfilled);
         }
 
         public void OnRejected(Action<Exception> onRejected)
         {
-            (Worker as IWorkerLike).OnRejected(onRejected);
+            Worker.OnRejected(onRejected);
         }
     }
 
-    public class WorkerDefer<Result> : IWorkerLike<Result>
+    public struct WorkerDefer<Result> : IWorkerLike<Result>
     {
         public Action<Result> Resolver { get; private set; }
-        public Action<IWorkerLike<Result>> ChainResolver { get; private set; }
         public Action<Exception> Rejecter { get; private set; }
-        public Worker<Result> Worker { get; private set; }
+        public IWorkerLike<Result> Worker { get; private set; }
 
-        public WorkerDefer()
+        public static WorkerDefer<Result> Create()
         {
-            Worker = new Worker<Result>((resolver, chainResolver, rejecter) => {
-                Resolver = resolver;
-                ChainResolver = chainResolver;
-                Rejecter = rejecter;
+            var defer = new WorkerDefer<Result>();
+            defer.Worker = new Worker<Result>((resolver, rejecter) => {
+                defer.Resolver = resolver;
+                defer.Rejecter = rejecter;
             });
+            return defer;
         }
+
+        public Result GetResult() => Worker.GetResult();
 
         public void Resolve(Result result)
         {
             Resolver(result);
-        }
-
-        public void Resolve(IWorkerLike<Result> workerLike)
-        {
-            ChainResolver(workerLike);
         }
 
         public void Reject(Exception exception)
@@ -74,12 +74,12 @@ namespace EasyCoroutine
 
         public void OnFullfilled(Action<Result> onFullfilled)
         {
-            (Worker as IWorkerLike<Result>).OnFullfilled(onFullfilled);
+            Worker.OnFullfilled(onFullfilled);
         }
 
         public void OnRejected(Action<Exception> onRejected)
         {
-            (Worker as IWorkerLike<Result>).OnRejected(onRejected);
+            Worker.OnRejected(onRejected);
         }
     }
 }

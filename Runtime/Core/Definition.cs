@@ -51,12 +51,16 @@ namespace EasyCoroutine
 
     public interface IWorkerLike<Result>
     {
-        void Resolve(IWorkerLike<Result> result);
         void Resolve(Result result);
         void Reject(Exception e);
         void Reject(string reason);
         void OnFullfilled(Action<Result> onFullfilled);
         void OnRejected(Action<Exception> onRejected);
+        /// <summary>
+        /// Reach result of this worker,
+        /// exception if call this method before resolve this worker
+        /// </summary>
+        Result GetResult();
     }
 
     public interface IInstructionCompletable

@@ -7,34 +7,21 @@ namespace EasyCoroutine
     {
         public delegate void SimpleExecutor(Action<Result> resolver);
         public delegate void Executor(Action<Result> resolver, Action<Exception> rejecter);
-        public delegate void FullExecutor(Action<Result> resolver, Action<IWorkerLike<Result>> chainResolver, Action<Exception> rejecter);
 
-        public WorkerCallback<Result> Callback { get; private set; }
         private Result m_result;
         private List<IInvokable<Result>> m_fullfilled = new List<IInvokable<Result>>();
         private List<IInvokable<Exception>> m_rejected = new List<IInvokable<Exception>>();
 
-        public Worker()
-        {
-            Callback = new WorkerCallback<Result>();
-        }
+        public Worker() { }
 
         public Worker(SimpleExecutor executor)
         {
-            Callback = new WorkerCallback<Result>();
             executor(InternalResolve);
         }
 
         public Worker(Executor executor)
         {
-            Callback = new WorkerCallback<Result>();
             executor(InternalResolve, InternalReject);
-        }
-
-        public Worker(FullExecutor executor)
-        {
-            Callback = new WorkerCallback<Result>();
-            executor(InternalResolve, InternalResolve, InternalReject);
         }
 
         public WorkerAwaiter GetAwaiter()
@@ -45,7 +32,6 @@ namespace EasyCoroutine
         ICustomAwaiter<Result> IAwaitable<Result>.GetAwaiter() => GetAwaiter();
 
         #region IWorkerLike implementations
-        void IWorkerLike<Result>.Resolve(IWorkerLike<Result> result) => InternalResolve(result);
         
         void IWorkerLike<Result>.Resolve(Result result) => InternalResolve(result);
 
@@ -64,66 +50,89 @@ namespace EasyCoroutine
             WorkerRejecter rejecter = new WorkerRejecter(null, onRejected);
             m_rejected.Add(rejecter);
         }
+
+        public Result GetResult()
+        {
+            if (Status != WorkerStatus.Succeed)
+                throw new Exception("Result is invalid before this worker resolve");
+            return m_result;
+        }
         #endregion
 
         #region IThenable implementations
         public IThenable Then(Action<Result> onFullfilled)
         {
-            var defer = new WorkerDefer();
+            var defer = WorkerDefer.Create();
             var next = new WorkerNextWithInput<Result>(defer, onFullfilled);
             m_fullfilled.Add(next);
-            return defer.Worker;
+            return defer.Worker as Worker;
         }
 
         public IThenable<NextResult> Then<NextResult>(Func<Result, NextResult> onFullfilled)
         {
-            var defer = new WorkerDefer<NextResult>();
+            var defer = WorkerDefer<NextResult>.Create();
             var next = new WorkerNextWithInputOutput<Result, NextResult>(defer, onFullfilled);
             m_fullfilled.Add(next);
-            return defer.Worker;
+            return defer.Worker as Worker<NextResult>;
         }
 
         public IThenable Then(Action onFullfilled)
         {
-            var defer = new WorkerDefer();
+            var defer = WorkerDefer.Create();
             var next = new WorkerNextWithInput<Result>(defer, _ => onFullfilled());
             m_fullfilled.Add(next);
-            return defer.Worker;
+            return defer.Worker as Worker;
         }
 
         public IThenable<NextResult> Then<NextResult>(Func<NextResult> onFullfilled)
         {
-            var defer = new WorkerDefer<NextResult>();
+            var defer = WorkerDefer<NextResult>.Create();
             var next = new WorkerNextWithInputOutput<Result, NextResult>(defer, _ => onFullfilled());
             m_fullfilled.Add(next);
-            return defer.Worker;
+            return defer.Worker as Worker<NextResult>;
         }
 
         public IThenable Catch(Action<Exception> onReject)
         {
-            var defer = new WorkerDefer();
+            var defer = WorkerDefer.Create();
             var reject = new WorkerRejecter(defer, onReject);
             m_rejected.Add(reject);
-            return defer.Worker;
+            return defer.Worker as Worker;
         }
 
         public IThenable<NextResult> Catch<NextResult>(Func<Exception, NextResult> onReject)
         {
-            var defer = new WorkerDefer<NextResult>();
+            var defer = WorkerDefer<NextResult>.Create();
             var reject = new WorkerRejecter<NextResult>(defer, onReject);
             m_rejected.Add(reject);
-            return defer.Worker;
+            return defer.Worker as Worker<NextResult>;
         }
         #endregion
 
         protected void ResetWorker()
         {
             if (Status == WorkerStatus.Running)
-                InternalResolve((Result)default);
+                InternalResolve(default);
             Reset();
         }
 
         protected void InternalResolve(Result result)
+        {
+            switch (result)
+            {
+                case IWorkerLike<IWorkerLike<Result>> worker:
+                    ChainResolve(worker);
+                    break;
+                case IWorkerLike worker:
+                    ChainResolve(worker);
+                    break;
+                default:
+                    ConfirmResolve(result);
+                    break;
+            }
+        }
+
+        private void ConfirmResolve(Result result)
         {
             m_result = result;
             try
@@ -132,13 +141,10 @@ namespace EasyCoroutine
                 if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
                     return;
                 Status = WorkerStatus.Succeed;
-                Callback.OnFullfiled(result);
-                if (continuations != null)
-                    continuations();
+                continuations?.Invoke();
                 for (int i = 0, len = m_fullfilled.Count; i < len; ++i)
                     m_fullfilled[i].Invoke(result);
             }
-            catch { throw; }
             finally
             {
                 if (continuations != null)
@@ -147,9 +153,18 @@ namespace EasyCoroutine
             }
         }
 
-        protected void InternalResolve(IWorkerLike<Result> prevWorker)
+        protected void ChainResolve(IWorkerLike prevWorker)
         {
-            prevWorker.OnFullfilled(ret => InternalResolve(ret));
+            prevWorker.OnFullfilled(() => ConfirmResolve((Result)prevWorker));
+        }
+
+        protected void ChainResolve(IWorkerLike<Result> prevWorker)
+        {
+            prevWorker.OnFullfilled(result => ConfirmResolve(result));
+        }
+
+        protected void ChainResolve(IWorkerLike<IWorkerLike<Result>> prevWorker)
+        {
         }
 
         protected void InternalReject(Exception e)
@@ -160,7 +175,6 @@ namespace EasyCoroutine
                 if (status == WorkerStatus.Succeed || status == WorkerStatus.Failed)
                     return;
                 Status = WorkerStatus.Failed;
-                Callback.OnException(WorkerException.FromException(e));
                 for (int i = 0, len = m_rejected.Count; i < len; ++i)
                     m_rejected[i].Invoke(e);
             }
@@ -228,7 +242,7 @@ namespace EasyCoroutine
         protected virtual void OnPoolRestore()
         {
             if (Status == WorkerStatus.Running)
-                InternalResolve((Result)default);
+                InternalResolve(default);
             Reset();
         }
 
