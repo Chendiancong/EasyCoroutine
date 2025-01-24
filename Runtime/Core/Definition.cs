@@ -40,22 +40,32 @@ namespace EasyCoroutine
         IThenable<NextResult> Then<NextResult>(Func<Result, NextResult> onFullfilled);
     }
 
-    public interface IWorkerLike
+    public interface IWorkerLikeBase
     {
-        void Resolve();
-        void Reject(Exception e);
-        void Reject(string reason);
         void OnFullfilled(Action onFullfilled);
         void OnRejected(Action<Exception> onRejected);
     }
 
-    public interface IWorkerLike<Result>
+    public interface IWorkerLikeWithResultBase : IWorkerLikeBase
+    {
+        object GetResult();
+    }
+
+    public interface IWorkerLike : IWorkerLikeBase
+    {
+        void Resolve();
+        void Resolve(IWorkerLike prevWorker);
+        void Reject(Exception e);
+        void Reject(string reason);
+    }
+
+    public interface IWorkerLike<Result> : IWorkerLikeBase
     {
         void Resolve(Result result);
+        void Resolve(IWorkerLike<Result> prevWorker);
         void Reject(Exception e);
         void Reject(string reason);
         void OnFullfilled(Action<Result> onFullfilled);
-        void OnRejected(Action<Exception> onRejected);
         /// <summary>
         /// Reach result of this worker,
         /// exception if call this method before resolve this worker

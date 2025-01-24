@@ -7,6 +7,7 @@ namespace EasyCoroutine
     {
         public delegate void SimpleExecutor(Action resolver);
         public delegate void Executor(Action resolver, Action<Exception> rejector);
+        public delegate void FullExecutor(Action resolver, Action<IWorkerLike> chainResolve, Action<Exception> rejecter);
 
         private List<IInvokable> m_fullfilled = new List<IInvokable>();
         private List<IInvokable<Exception>> m_rejected = new List<IInvokable<Exception>>();
@@ -23,6 +24,11 @@ namespace EasyCoroutine
             executor(InternalResolve, InternalReject);
         }
 
+        public Worker(FullExecutor executor) : this()
+        {
+            executor(InternalResolve, InternalChainResolve, InternalReject);
+        }
+
         public WorkerAwaiter GetAwaiter()
         {
             return new WorkerAwaiter(this);
@@ -33,18 +39,20 @@ namespace EasyCoroutine
         #region IWorkerLike implementaions
         void IWorkerLike.Resolve() => InternalResolve();
 
+        void IWorkerLike.Resolve(IWorkerLike prevWorker) => InternalChainResolve(prevWorker);
+
         void IWorkerLike.Reject(Exception e) => InternalReject(e);
 
         void IWorkerLike.Reject(string reason)
             =>InternalReject(new WorkerException(reason));
 
-        void IWorkerLike.OnFullfilled(Action onFullfilled)
+        public void OnFullfilled(Action onFullfilled)
         {
             WorkerNext next = new WorkerNext(null, onFullfilled);
             m_fullfilled.Add(next);
         }
 
-        void IWorkerLike.OnRejected(Action<Exception> onRejected)
+        public void OnRejected(Action<Exception> onRejected)
         {
             WorkerRejecter rejecter = new WorkerRejecter(null, onRejected);
             m_rejected.Add(rejecter);
@@ -96,6 +104,16 @@ namespace EasyCoroutine
 
         protected void InternalResolve()
         {
+            ConfirmResolve();
+        }
+
+        protected void InternalChainResolve(IWorkerLike prevWorker)
+        {
+            prevWorker.OnFullfilled(() => ConfirmResolve());
+        }
+
+        private void ConfirmResolve()
+        {
             try
             {
                 WorkerStatus status = Status;
@@ -138,8 +156,9 @@ namespace EasyCoroutine
         }
 
         private void InternalContinue() {
-            if (continuations != null)
+            if (continuations != null) {
                 continuations();
+            }
         }
 
         public struct WorkerAwaiter : ICustomAwaiter

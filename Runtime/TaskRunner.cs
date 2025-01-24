@@ -15,27 +15,8 @@ namespace EasyCoroutine
 
         public void Doit()
         {
-            // RunTask().ContinueWith(_ => Debug.Log("RunTask ok!"));
-            // WaitInstruction.Create(new WaitForSeconds(1f))
-            //     .Then(() => {
-            //         Debug.Log("Wait 1s");
-            //         return 1;
-            //     })
-            //     .Then(obj => {
-            //         Debug.Log("then");
-            //         Debug.Log(obj);
-            //         var loader = new BundleAssetLoader<GameObject>
-            //         {
-            //             path = $"{Application.streamingAssetsPath}{Path.DirectorySeparatorChar}sphere.prefab.asset",
-            //             assetName = "Sphere",
-            //             autoUnloadBundle = true
-            //         };
-            //         return WaitBundleAsset<GameObject>.Create(loader);
-            //     })
-            //     .Then(obj => {
-            //         Debug.Log("task ok");
-            //         Debug.Log(obj);
-            //     });
+            // RunTask().ContinueWith(_ => Debug.Log("RunTask ok!")).ContinueWith(_ => 5).ContinueWith(task => Debug.Log($"Task Result is {task.Result}"));
+
             WaitInstruction.Create(new WaitForSeconds(1f))
                 .Then(() => {
                     Debug.Log("wait 1s");
@@ -59,6 +40,9 @@ namespace EasyCoroutine
                     Debug.Log($"loaded {worker.GetResult()}");
                     var asset = worker.GetResult().asset;
                     Instantiate(asset);
+                })
+                .Then(() => {
+                    Debug.Log("worker is finished");
                 });
         }
 

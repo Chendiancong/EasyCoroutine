@@ -7,6 +7,7 @@ namespace EasyCoroutine
     {
         public delegate void SimpleExecutor(Action<Result> resolver);
         public delegate void Executor(Action<Result> resolver, Action<Exception> rejecter);
+        public delegate void FullExecutor(Action<Result> resolver, Action<IWorkerLike<Result>> chainResolver, Action<Exception> rejecter);
 
         private Result m_result;
         private List<IInvokable<Result>> m_fullfilled = new List<IInvokable<Result>>();
@@ -24,6 +25,11 @@ namespace EasyCoroutine
             executor(InternalResolve, InternalReject);
         }
 
+        public Worker(FullExecutor executor)
+        {
+            executor(InternalResolve, InternalChangeResolve, InternalReject);
+        }
+
         public WorkerAwaiter GetAwaiter()
         {
             return new WorkerAwaiter(this);
@@ -35,9 +41,17 @@ namespace EasyCoroutine
         
         void IWorkerLike<Result>.Resolve(Result result) => InternalResolve(result);
 
+        void IWorkerLike<Result>.Resolve(IWorkerLike<Result> prevWorker) => InternalChangeResolve(prevWorker);
+
         void IWorkerLike<Result>.Reject(Exception e) => InternalReject(e);
 
         void IWorkerLike<Result>.Reject(string reason) => InternalReject(new Exception(reason));
+
+        void IWorkerLikeBase.OnFullfilled(Action onFullfilled)
+        {
+            WorkerNextWithInput<Result> next = new WorkerNextWithInput<Result>(null, _ => onFullfilled());
+            m_fullfilled.Add(next);
+        }
 
         void IWorkerLike<Result>.OnFullfilled(Action<Result> onFullfilled)
         {
@@ -45,7 +59,7 @@ namespace EasyCoroutine
             m_fullfilled.Add(next);
         }
 
-        void IWorkerLike<Result>.OnRejected(Action<Exception> onRejected)
+        void IWorkerLikeBase.OnRejected(Action<Exception> onRejected)
         {
             WorkerRejecter rejecter = new WorkerRejecter(null, onRejected);
             m_rejected.Add(rejecter);
@@ -120,11 +134,8 @@ namespace EasyCoroutine
         {
             switch (result)
             {
-                case IWorkerLike<IWorkerLike<Result>> worker:
-                    ChainResolve(worker);
-                    break;
-                case IWorkerLike worker:
-                    ChainResolve(worker);
+                case IWorkerLikeBase worker:
+                    InternalChainResolve(worker);
                     break;
                 default:
                     ConfirmResolve(result);
@@ -153,18 +164,14 @@ namespace EasyCoroutine
             }
         }
 
-        protected void ChainResolve(IWorkerLike prevWorker)
+        protected void InternalChainResolve(IWorkerLikeBase prevWorker)
         {
             prevWorker.OnFullfilled(() => ConfirmResolve((Result)prevWorker));
         }
 
-        protected void ChainResolve(IWorkerLike<Result> prevWorker)
+        protected void InternalChangeResolve(IWorkerLike<Result> prevWorker)
         {
-            prevWorker.OnFullfilled(result => ConfirmResolve(result));
-        }
-
-        protected void ChainResolve(IWorkerLike<IWorkerLike<Result>> prevWorker)
-        {
+            prevWorker.OnFullfilled(result => ConfirmResolve(prevWorker.GetResult()));
         }
 
         protected void InternalReject(Exception e)

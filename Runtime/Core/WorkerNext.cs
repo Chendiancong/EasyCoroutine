@@ -34,7 +34,7 @@ namespace EasyCoroutine
         void IInvokable.Invoke()
         {
             Output o = m_nextAction();
-            m_nextWorker.Resolve(o);
+            m_nextWorker?.Resolve(o);
         }
     }
 
@@ -52,7 +52,7 @@ namespace EasyCoroutine
         void IInvokable<Input>.Invoke(Input input)
         {
             m_nextAction(input);
-            m_nextWorker.Resolve();
+            m_nextWorker?.Resolve();
         }
     }
 
@@ -71,6 +71,23 @@ namespace EasyCoroutine
         {
             Output o = m_nextAction(input);
             m_nextWorker.Resolve(o);
+        }
+    }
+
+    public struct ChainWorkerNext : IInvokable<IWorkerLike>
+    {
+        private Worker m_nextWorker;
+        private Action<IWorkerLike> m_nextAction;
+
+        void IInvokable<IWorkerLike>.Invoke(IWorkerLike input)
+        {
+        }
+    }
+
+    public struct ChainWorkerNextWithOutput<Output> : IInvokable<IWorkerLike<Output>>
+    {
+        void IInvokable<IWorkerLike<Output>>.Invoke(IWorkerLike<Output> input)
+        {
         }
     }
 }
