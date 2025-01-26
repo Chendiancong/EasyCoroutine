@@ -3,10 +3,10 @@
 ## 主要特性
 - <b>异步任务管理：</b>支持创建和管理异步任务，支持任务的等待、完成和错误处理
 - <b>链式调用：</b>通过<b>Then</b>和<b>Catch</b>方法，支持任务的链式调用和错误捕获。
-- <b>对象池管理：</b>通过<b>PooledWorker</b>和<b>PooledWorker<Result></b>类，支持对象池管理，减少频繁创建和销毁对象的开销。
+- <b>对象池管理：</b>通过<b>PooledWorker</b>和<b>PooledWorker&lt;Result&gt;</b>类，支持对象池管理，减少频繁创建和销毁对象的开销。
 - <b>协程扩展：</b>提供了<b>GetAwaiter</b>和<b>Then</b>扩展方法，支持await语法和链式调用。
-- <b>资源加载：</b>提供WaitBundleAsset和WaitBundleAssetMultiple类，支持从AssetBundle中异步加载单个或多个资源。
-- <b>自由控制：</b>通过<b>WaitPromise</b>和<b>WaitPromise<Result></b>类，支持手动控制任务的完成和错误处理。
+- <b>资源加载：</b>提供<b>WaitBundleAsset</b><b>和WaitBundleAssetMultiple</b>类，支持从AssetBundle中异步加载单个或多个资源。
+- <b>自由控制：</b>通过<b>WaitPromise</b>和<b>WaitPromise&lt;Result&gt;</b>类，支持手动控制任务的完成和错误处理。
 ## 基本用法
 ```CSharp
 using namespace EasyCoroutine;
@@ -78,13 +78,13 @@ WaitInstruction.Create(new WaitForSeconds(1f))
 更多示例请参考**Examples文件夹**。
 
 ## 核心模块
-<b>Worker</b>和<b>Worker<Result></b>是整个EasyCoroutine系统的核心类，它们为异步任务的处理提供了基础支持。这两个类的作用贯穿了整个系统，定义了异步任务的基本行为，包括任务的创建、执行、完成、错误处理、链式调用等。
+<b>Worker</b>和<b>Worker&lt;Result&gt;</b>是整个EasyCoroutine系统的核心类，它们为异步任务的处理提供了基础支持。这两个类的作用贯穿了整个系统，定义了异步任务的基本行为，包括任务的创建、执行、完成、错误处理、链式调用等。
 
 1. 异步任务的基础：
-    - Worker和Worker<Result>是整个系统的核心，其他类（如WaitBundleAsset，WaitInstruction，WaitPromise等）都直接或简介依赖于它们。
+    - Worker和Worker&lt;Result&gt;是整个系统的核心，其他类（如WaitBundleAsset，WaitInstruction，WaitPromise等）都直接或简介依赖于它们。
     - 它们为异步任务提供了统一的接口和行为规范。
     - Worker类是一个轻量级的异步任务管理器，设计灵感来源于JavaScript的Promise。
-    - Worker<Result>类扩展了Worker的功能，用于处理返回结果的异步操作。
+    - Worker&lt;Result&gt;类扩展了Worker的功能，用于处理返回结果的异步操作。
 2. 任务链式调用：
     - 通过<b>Then</b>和<b>Catch</b>方法，实现任务的链式调用，使得复杂的异步操作可以以清晰的方式编写。
 3. 异步等待支持：
@@ -92,7 +92,7 @@ WaitInstruction.Create(new WaitForSeconds(1f))
 4. 错误处理：
     - 提供了统一的错误处理机制，您可以通过**Catch**方法捕获任务执行过程中的异常
 5. 扩展性：
-    - 通过继承Worker和Worker<Result>，可以轻松扩展新的异步任务类型。
+    - 通过继承Worker和Worker&lt;Result&gt;，可以轻松扩展新的异步任务类型。
 
 ## 安装
 通过**Unity包管理器（Window/PackageManager）**安装:   
