@@ -124,7 +124,10 @@ namespace EasyCoroutine
                 for (int i = 0, len = m_fullfilled.Count; i < len; ++i)
                     m_fullfilled[i].Invoke();
             }
-            catch { throw; }
+            catch (Exception ex)
+            {
+                InternalReject(ex);
+            }
             finally
             {
                 if (continuations != null)

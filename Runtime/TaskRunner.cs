@@ -30,7 +30,7 @@ namespace EasyCoroutine
                     Debug.Log("wait one frame");
                     var loader = new BundleAssetLoader<GameObject>
                     {
-                        path = Path.Combine(Application.streamingAssetsPath, "sphere.prefab.asset"),
+                        path = Path.Combine(Application.streamingAssetsPath, "sphere.asset"),
                         assetName = "Sphere",
                         autoUnloadBundle = true
                     };
