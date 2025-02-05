@@ -96,7 +96,7 @@ WaitInstruction.Create(new WaitForSeconds(1f))
 
 ## 安装
 通过**Unity包管理器（Window/PackageManager）**安装:   
-1. **add package from git url**，地址为https://gitee.com/diancongchen/EasyCoroutine.git
+1. **add package from git url**，地址为git@github.com:Chendiancong/EasyCoroutine.git
 2. clone仓库到本地，通过**add package from dist**进行安装
 3. 也可以直接作为子模块添加到Assets目录下，这样在使用的同时也可以对他进行修改
 
