@@ -75,8 +75,6 @@ WaitInstruction.Create(new WaitForSeconds(1f))
     });
 ```
 
-更多示例请参考**Examples文件夹**。
-
 ## 核心模块
 <b>Worker</b>和<b>Worker&lt;Result&gt;</b>是整个EasyCoroutine系统的核心类，它们为异步任务的处理提供了基础支持。这两个类的作用贯穿了整个系统，定义了异步任务的基本行为，包括任务的创建、执行、完成、错误处理、链式调用等。
 
