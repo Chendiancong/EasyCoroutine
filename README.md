@@ -98,5 +98,8 @@ WaitInstruction.Create(new WaitForSeconds(1f))
 2. clone仓库到本地，通过**add package from dist**进行安装
 3. 也可以直接作为子模块添加到Assets目录下，这样在使用的同时也可以对他进行修改
 
+## improvements
+- [ ] 链式调用的时候，异常需要跨越多个Then向下传递，直到遇到第一个Catch
+
 ## License
 EasyCoroutine采用 MIT 许可证，详情请参阅LICENSE文件。
